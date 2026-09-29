@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Zaku VERSION 0.1.0 LANGUAGES CXX
+project(Zaku VERSION 0.1.1 LANGUAGES CXX
         DESCRIPTION "Zaku Assembles Kinematics and Systematics")
 
 # ---------------------------------------------------------------------------
