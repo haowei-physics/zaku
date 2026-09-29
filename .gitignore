@@ -1,0 +1,24 @@
+# build trees
+build/
+build-*/
+install/
+cmake-build-*/
+
+# editors / OS
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# ROOT / generated outputs
+*.pcm
+*.rootmap
+G__*.cxx
+work/
+outputs/
