@@ -1,0 +1,12 @@
+# Zaku environment. Source this file (bash/zsh):
+#     source @ZAKU_SETUP_ROOT@/setup.sh
+# It puts libZaku.so (with its ROOT dictionary and rootmap) on the dynamic
+# path so that ROOT and PyROOT autoload it, makes the headers visible to Cling
+# and PyROOT, adds the python shim and the zaku command to the path, and points
+# ZAKU_DATA at the shipped data/configs.
+export ZAKU_ROOT="@ZAKU_SETUP_ROOT@"
+export ZAKU_DATA="@ZAKU_SETUP_DATA@"
+export LD_LIBRARY_PATH="@ZAKU_SETUP_LIBDIR@${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export ROOT_INCLUDE_PATH="@ZAKU_SETUP_INCLUDE@${ROOT_INCLUDE_PATH:+:$ROOT_INCLUDE_PATH}"
+export PYTHONPATH="@ZAKU_SETUP_PYTHON@${PYTHONPATH:+:$PYTHONPATH}"
+export PATH="@ZAKU_SETUP_BINDIR@${PATH:+:$PATH}"

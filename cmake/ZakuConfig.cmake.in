@@ -1,0 +1,12 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(ROOT COMPONENTS Core RIO Tree TreePlayer Hist MathCore Physics Matrix)
+
+include("${CMAKE_CURRENT_LIST_DIR}/ZakuTargets.cmake")
+
+set_and_check(Zaku_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_PREFIX@/include")
+set(Zaku_LIBRARIES Zaku::Zaku)
+set(Zaku_DATA_DIR "@PACKAGE_CMAKE_INSTALL_PREFIX@/share/zaku")
+
+check_required_components(Zaku)
