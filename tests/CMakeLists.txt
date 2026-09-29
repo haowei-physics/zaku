@@ -50,3 +50,23 @@ if(ZAKU_BUILD_APPS)
   set_tests_properties(cli_version PROPERTIES ENVIRONMENT "${ZAKU_TEST_ENV}" LABELS "unit"
                        PASS_REGULAR_EXPRESSION "^${PROJECT_VERSION}")
 endif()
+
+# --- Stage 1 ----------------------------------------------------------------
+zaku_add_cxx_test(test_flux        unit/test_flux.cc        unit)
+zaku_add_cxx_test(test_experiment  unit/test_experiment.cc  unit)
+zaku_add_cxx_test(test_manifest    unit/test_manifest.cc    unit)
+zaku_add_cxx_test(test_truth       unit/test_truth.cc       unit)
+zaku_add_cxx_test(test_flattree_io unit/test_flattree_io.cc unit)
+zaku_add_python_test(python_experiment python/test_experiment.py python unit)
+
+# Regression tests need the read-only reference inputs; they skip (exit 77) otherwise.
+zaku_add_cxx_test(regression_flux_reference regression/test_flux_reference.cc regression)
+zaku_add_cxx_test(regression_join_reference regression/test_join_reference.cc regression)
+set_tests_properties(regression_flux_reference regression_join_reference PROPERTIES SKIP_RETURN_CODE 77)
+
+if(ZAKU_BUILD_APPS)
+  add_test(NAME cli_describe COMMAND zaku ${CMAKE_SOURCE_DIR}/configs/hk_t2k_like.yaml describe)
+  add_test(NAME cli_list_samples COMMAND zaku ${CMAKE_SOURCE_DIR}/configs/legacy_hk_mock.yaml list-samples)
+  set_tests_properties(cli_describe cli_list_samples PROPERTIES ENVIRONMENT "${ZAKU_TEST_ENV}" LABELS "unit")
+  set_tests_properties(cli_list_samples PROPERTIES PASS_REGULAR_EXPRESSION "numu_x_numu_200K_FHC")
+endif()

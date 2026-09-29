@@ -1,0 +1,42 @@
+# Hyper-K-like far detector on the T2K beam, T2K-like reconstruction.
+# Every key maps one-to-one onto a zaku::Experiment setter; see docs/config_reference.md.
+# Paths are relative to this file unless absolute; ${ZAKU_DATA} is set by setup.sh.
+name: HK
+baseline_km: 295.0
+matter: { density_g_cm3: 2.6, electron_fraction: 0.5 }
+detector: { material: water, fiducial_mass_kt: 188 }
+
+# T2K 2020 public release: density per 50 MeV per 1e21 POT, GeV axes.
+flux_units: { pot_norm: 1.0e21, bin_norm_GeV: 0.05 }
+beam_modes:
+  FHC:
+    pot: 6.75e21
+    flux: { file: "${ZAKU_DATA}/data/flux/t2kflux_2020_plus250kA_nominal.root", t2k_detector: sk }
+  RHC:
+    pot: 2.025e22
+    flux: { file: "${ZAKU_DATA}/data/flux/t2kflux_2020_minus250kA_nominal.root", t2k_detector: sk }
+flux_covariance:
+  file: "${ZAKU_DATA}/data/flux/t2kflux_2020_covariance.root"
+  matrix: total_flux_cov
+  far_detector_prefix: sk
+  near_detector_prefix: nd280
+  nd_constraint: 0.8
+
+# One generator production per (beam mode, flux species, interaction species).
+# Appearance samples are generated as fully converted and weighted by the
+# oscillation probability later.
+mc_samples:
+  - { beam: FHC, flux: numu,    interaction: numu,    n: 200000 }
+  - { beam: FHC, flux: numubar, interaction: numubar, n: 50000 }
+  - { beam: FHC, flux: nue,     interaction: nue,     n: 200000 }
+  - { beam: FHC, flux: nuebar,  interaction: nuebar,  n: 50000 }
+  - { beam: FHC, flux: numu,    interaction: nue,     n: 50000 }
+  - { beam: FHC, flux: numubar, interaction: nuebar,  n: 50000 }
+  - { beam: RHC, flux: numu,    interaction: numu,    n: 50000 }
+  - { beam: RHC, flux: numubar, interaction: numubar, n: 200000 }
+  - { beam: RHC, flux: nue,     interaction: nue,     n: 50000 }
+  - { beam: RHC, flux: nuebar,  interaction: nuebar,  n: 200000 }
+  - { beam: RHC, flux: numu,    interaction: nue,     n: 50000 }
+  - { beam: RHC, flux: numubar, interaction: nuebar,  n: 50000 }
+
+run: { work_dir: ../work/hk_t2k_like, seed: 20250929 }

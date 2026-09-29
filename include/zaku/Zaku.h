@@ -11,5 +11,18 @@
 #include "zaku/core/Types.h"
 #include "zaku/core/Units.h"
 #include "zaku/core/Detector.h"
+#include "zaku/core/FluxSpec.h"
+#include "zaku/core/McSample.h"
+#include "zaku/core/Manifest.h"
+#include "zaku/core/Provenance.h"
+#include "zaku/core/RunSettings.h"
+#include "zaku/core/Experiment.h"
+#include "zaku/flux/FluxHistograms.h"
+#include "zaku/flux/FluxPreparer.h"
+#include "zaku/flux/FluxCovarianceInput.h"
+#include "zaku/event/FlatEvent.h"
+#include "zaku/event/FlatTreeCursor.h"
+#include "zaku/event/WeightCursor.h"
+#include "zaku/event/EventJoin.h"
 
 #endif  // ZAKU_ZAKU_H

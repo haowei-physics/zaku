@@ -18,10 +18,20 @@ on a batch system). Zaku's own stages are plain in-process ROOT file processing.
 
 ## Status
 
-Stage 0 of the implementation plan: build system, ROOT dictionary, unit
-conventions and the core value types (`NuSpecies`, `BeamMode`, `Target`,
-`Detector`). The pipeline stages are added one at a time; `zaku --help` lists
-which are available in a given build.
+Stages 0 and 1 of the implementation plan are in place: build system and ROOT
+dictionary, unit conventions, the core value types (`NuSpecies`, `BeamMode`,
+`Target`, `Detector`), the `Experiment` object with its YAML builder
+([docs/config_reference.md](docs/config_reference.md)), flux loading and
+generator-ready rebinning, the flux covariance reader, and the event layer
+(flat-tree cursor, T2KReWeight weight cursor, and the join between them,
+[docs/pipeline.md](docs/pipeline.md)). The processing stages are added one at
+a time; `zaku --help` lists which are available in a given build.
+
+```bash
+zaku configs/hk_t2k_like.yaml describe        # what the experiment asserts
+zaku configs/hk_t2k_like.yaml list-samples    # MC sample names, in SampleIndex order
+zaku configs/hk_t2k_like.yaml status          # which production files exist
+```
 
 ## Build
 

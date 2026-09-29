@@ -1,0 +1,43 @@
+# Bit-for-bit reproduction of the legacy mock_lbl_inputs chain, used by the
+# regression tests. Differences from hk_t2k_like.yaml:
+#   * the nucleon count is asserted as the legacy constant 1.132e35
+#     (188 kt of water gives 1.13216e35 from the mass);
+#   * the generator-ready uniform-bin flux copies are used directly;
+#   * the legacy random-number order and seeds are reproduced.
+name: HK_legacy_mock
+baseline_km: 295.0
+matter: { density_g_cm3: 2.6, electron_fraction: 0.5 }
+detector: { material: water, fiducial_mass_kt: 188, n_nucleons: 1.132e35 }
+
+flux_units: { pot_norm: 1.0e21, bin_norm_GeV: 0.05 }
+beam_modes:
+  FHC:
+    pot: 6.75e21
+    flux: { file: "${ZAKU_DATA}/data/flux/t2kflux_2020_plus250kA_uniform.root", t2k_detector: sk }
+  RHC:
+    pot: 2.025e22
+    flux: { file: "${ZAKU_DATA}/data/flux/t2kflux_2020_minus250kA_uniform.root", t2k_detector: sk }
+flux_covariance:
+  file: "${ZAKU_DATA}/data/flux/t2kflux_2020_covariance.root"
+  matrix: total_flux_cov
+  far_detector_prefix: sk
+  near_detector_prefix: nd280
+  nd_constraint: 0.8
+
+# The legacy FakeSelect chain order per beam mode: numu, numubar, nue, nuebar,
+# numu->nue, numubar->nuebar. This order defines SampleIndex.
+mc_samples:
+  - { beam: FHC, flux: numu,    interaction: numu,    n: 200000 }
+  - { beam: FHC, flux: numubar, interaction: numubar, n: 50000 }
+  - { beam: FHC, flux: nue,     interaction: nue,     n: 200000 }
+  - { beam: FHC, flux: nuebar,  interaction: nuebar,  n: 50000 }
+  - { beam: FHC, flux: numu,    interaction: nue,     n: 50000 }
+  - { beam: FHC, flux: numubar, interaction: nuebar,  n: 50000 }
+  - { beam: RHC, flux: numu,    interaction: numu,    n: 50000 }
+  - { beam: RHC, flux: numubar, interaction: numubar, n: 200000 }
+  - { beam: RHC, flux: nue,     interaction: nue,     n: 50000 }
+  - { beam: RHC, flux: nuebar,  interaction: nuebar,  n: 200000 }
+  - { beam: RHC, flux: numu,    interaction: nue,     n: 50000 }
+  - { beam: RHC, flux: numubar, interaction: nuebar,  n: 50000 }
+
+run: { work_dir: ../work/legacy_hk_mock, seed: 1234, legacy_rng_order: true }

@@ -48,6 +48,19 @@ set(ZAKU_SOURCES
   src/core/Types.cc
   src/core/Units.cc
   src/core/Detector.cc
+  src/core/FluxSpec.cc
+  src/core/McSample.cc
+  src/core/Manifest.cc
+  src/core/Provenance.cc
+  src/core/Experiment.cc
+  src/core/ExperimentYaml.cc
+  src/flux/FluxHistograms.cc
+  src/flux/FluxPreparer.cc
+  src/flux/FluxCovarianceInput.cc
+  src/event/FlatEvent.cc
+  src/event/FlatTreeCursor.cc
+  src/event/WeightCursor.cc
+  src/event/EventJoin.cc
 )
 
 # Headers that go into the ROOT dictionary. They are named relative to
@@ -58,6 +71,19 @@ set(ZAKU_DICT_HEADERS
   zaku/core/Types.h
   zaku/core/Units.h
   zaku/core/Detector.h
+  zaku/core/FluxSpec.h
+  zaku/core/McSample.h
+  zaku/core/Manifest.h
+  zaku/core/Provenance.h
+  zaku/core/RunSettings.h
+  zaku/core/Experiment.h
+  zaku/flux/FluxHistograms.h
+  zaku/flux/FluxPreparer.h
+  zaku/flux/FluxCovarianceInput.h
+  zaku/event/FlatEvent.h
+  zaku/event/FlatTreeCursor.h
+  zaku/event/WeightCursor.h
+  zaku/event/EventJoin.h
   zaku/Zaku.h
 )
 

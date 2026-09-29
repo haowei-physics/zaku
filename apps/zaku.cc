@@ -3,10 +3,9 @@
 // Usage: zaku <experiment.yaml> <stage> [--sample <name>] [--force]
 //        zaku --version | --help
 //
-// Stages are added as the library grows; the ones not available yet in this
-// build are listed as such by --help.
+// Stages are added as the library grows; --help lists the ones this build has.
 #include <cstdio>
-#include <cstring>
+#include <exception>
 #include <string>
 #include <vector>
 
@@ -21,6 +20,11 @@ struct StageInfo {
 };
 
 const StageInfo kStages[] = {
+    {"describe", "print the experiment as this build understands it", true},
+    {"validate", "check that the experiment is complete and its inputs exist", true},
+    {"status", "report which production files exist", true},
+    {"list-samples", "print the MC sample names in index order", true},
+    {"list-beam-modes", "print the beam modes with POT and flux integrals", true},
     {"prepare", "write generation, weight and flatten inputs + manifests", false},
     {"prepare-generation", "write generator cards/seed files + generate manifest", false},
     {"prepare-weights", "write dial configs + weight manifest", false},
@@ -31,12 +35,17 @@ const StageInfo kStages[] = {
     {"covariances", "write the parameter-set files", false},
     {"summary", "summarise the systematics", false},
     {"gundam-config", "write the GUNDAM configuration tree + fit manifest", false},
-    {"status", "report which inputs and outputs exist", false},
-    {"list-samples", "print the MC sample names in index order", false},
     {"list-dials", "print the dial catalogue", false},
     {"list-models", "print the NEUT model choices", false},
     {"list-tunes", "print the GENIE tune catalogue", false},
     {"show-response", "print the response tables", false},
+};
+
+struct Options {
+  std::string config;
+  std::string stage;
+  std::string sample;
+  bool force = false;
 };
 
 void printUsage() {
@@ -50,6 +59,51 @@ void printUsage() {
   }
   std::printf("\nZaku never runs NEUT, GENIE, T2KReWeight, NUISANCE or GUNDAM itself: the prepare\n");
   std::printf("stages write their inputs and a manifest of command lines for you to run.\n");
+}
+
+int run(const Options& opt) {
+  zaku::Experiment exp = zaku::Experiment::fromConfig(opt.config);
+  const std::string& stage = opt.stage;
+  if (stage == "describe") {
+    std::printf("%s", exp.describe().c_str());
+    return 0;
+  }
+  if (stage == "validate") {
+    exp.validate();
+    std::printf("%s: complete\n", exp.name().c_str());
+    return 0;
+  }
+  if (stage == "status") {
+    std::printf("%s", exp.status().c_str());
+    return 0;
+  }
+  if (stage == "list-samples") {
+    for (const auto& s : exp.mcSamples()) {
+      if (!opt.sample.empty() && opt.sample != s.name()) continue;
+      std::printf("%s\n", s.name().c_str());
+    }
+    return 0;
+  }
+  if (stage == "list-beam-modes") {
+    for (zaku::BeamMode mode : exp.beamModes()) {
+      std::printf("%s: POT %.4e\n", zaku::toString(mode).c_str(), exp.pot(mode));
+      for (int pdg : exp.flux(mode).pdgs()) {
+        std::printf("  %-8s %.6e /cm^2/POT\n", zaku::NuSpecies::fromPdg(pdg).name().c_str(),
+                    exp.fluxIntegralPerPOT(mode, pdg));
+      }
+    }
+    return 0;
+  }
+  for (const auto& s : kStages) {
+    if (stage == s.name && !s.available) {
+      std::fprintf(stderr, "zaku: stage '%s' is not available in this build (Zaku %s)\n", s.name,
+                   zaku::version().c_str());
+      return 2;
+    }
+  }
+  std::fprintf(stderr, "zaku: unknown stage '%s'\n", stage.c_str());
+  printUsage();
+  return 1;
 }
 
 }  // namespace
@@ -69,17 +123,23 @@ int main(int argc, char** argv) {
     printUsage();
     return 1;
   }
-  const std::string& stage = args[1];
-  for (const auto& s : kStages) {
-    if (stage == s.name) {
-      if (!s.available) {
-        std::fprintf(stderr, "zaku: stage '%s' is not available in this build (Zaku %s)\n", s.name,
-                     zaku::version().c_str());
-        return 2;
-      }
+  Options opt;
+  opt.config = args[0];
+  opt.stage = args[1];
+  for (std::size_t i = 2; i < args.size(); ++i) {
+    if (args[i] == "--force") {
+      opt.force = true;
+    } else if (args[i] == "--sample" && i + 1 < args.size()) {
+      opt.sample = args[++i];
+    } else {
+      std::fprintf(stderr, "zaku: unknown option '%s'\n", args[i].c_str());
+      return 1;
     }
   }
-  std::fprintf(stderr, "zaku: unknown stage '%s'\n", stage.c_str());
-  printUsage();
-  return 1;
+  try {
+    return run(opt);
+  } catch (const std::exception& e) {
+    std::fprintf(stderr, "zaku: %s\n", e.what());
+    return 3;
+  }
 }

@@ -64,6 +64,29 @@ histogramToGeV = _ns.histogramToGeV
 requireGeVAxis = _ns.requireGeVAxis
 looksLikeMeVAxis = _ns.looksLikeMeVAxis
 
+# Stage 1: experiment, flux, events
+Experiment = _ns.Experiment
+FluxSpec = _ns.FluxSpec
+FluxCovarianceSpec = _ns.FluxCovarianceSpec
+McSample = _ns.McSample
+SampleLayout = _ns.SampleLayout
+Manifest = _ns.Manifest
+ManifestJob = _ns.ManifestJob
+Provenance = _ns.Provenance
+RunSettings = _ns.RunSettings
+FluxHistograms = _ns.FluxHistograms
+FluxPreparer = _ns.FluxPreparer
+FluxCovarianceInput = _ns.FluxCovarianceInput
+FlatEvent = _ns.FlatEvent
+SampleContext = _ns.SampleContext
+TruthVariables = _ns.TruthVariables
+FlatTreeCursor = _ns.FlatTreeCursor
+DialKnots = _ns.DialKnots
+T2KRWWeightCursor = _ns.T2KRWWeightCursor
+EventJoin = _ns.EventJoin
+JoinOptions = _ns.JoinOptions
+JoinStats = _ns.JoinStats
+
 DATA_DIR = _os.environ.get("ZAKU_DATA", "")
 
 
@@ -102,5 +125,9 @@ __all__ = [
     "version", "versionMajor", "versionMinor", "versionPatch", "schemaVersion", "buildInfo",
     "Flavour", "NuSpecies", "BeamMode", "Target", "Detector", "NeutTarget", "EnergyUnit", "units",
     "toGeV", "fromGeV", "histogramToGeV", "requireGeVAxis", "looksLikeMeVAxis",
+    "Experiment", "FluxSpec", "FluxCovarianceSpec", "McSample", "SampleLayout", "Manifest", "ManifestJob",
+    "Provenance", "RunSettings", "FluxHistograms", "FluxPreparer", "FluxCovarianceInput",
+    "FlatEvent", "SampleContext", "TruthVariables", "FlatTreeCursor", "DialKnots", "T2KRWWeightCursor",
+    "EventJoin", "JoinOptions", "JoinStats",
     "DATA_DIR", "strings", "to_numpy",
 ]

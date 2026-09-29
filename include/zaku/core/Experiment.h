@@ -1,0 +1,124 @@
+#ifndef ZAKU_CORE_EXPERIMENT_H
+#define ZAKU_CORE_EXPERIMENT_H
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "zaku/core/Detector.h"
+#include "zaku/core/FluxSpec.h"
+#include "zaku/core/McSample.h"
+#include "zaku/core/RunSettings.h"
+#include "zaku/core/Types.h"
+
+namespace zaku {
+
+class FluxHistograms;
+
+/// The one user-facing object: everything the user asserts about a
+/// hypothetical experiment, and the pipeline stages as methods.
+///
+/// Build it in code with the chainable setters, or from a YAML file whose
+/// keys map one-to-one onto them (see docs/config_reference.md). Sections the
+/// current build does not interpret yet are kept verbatim so a config file
+/// stays usable across stages.
+class Experiment {
+public:
+  explicit Experiment(std::string name = "experiment");
+  ~Experiment();
+  Experiment(const Experiment& other);
+  Experiment& operator=(const Experiment& other);
+  Experiment(Experiment&&) noexcept;
+  Experiment& operator=(Experiment&&) noexcept;
+
+  // --- configuration files ---------------------------------------------
+  /// Load a YAML file. Relative paths inside it are resolved against the
+  /// file's directory; `${VAR}` is expanded from the environment.
+  static Experiment fromConfig(const std::string& yamlPath);
+  /// Parse YAML text; `baseDir` resolves relative paths.
+  static Experiment fromYamlString(const std::string& yaml, const std::string& baseDir = "");
+  std::string toYaml() const;
+  void saveConfig(const std::string& path) const;
+  /// Path of the file this experiment was loaded from (empty if built in code).
+  const std::string& configPath() const;
+
+  // --- identity, geometry, matter ---------------------------------------
+  const std::string& name() const;
+  Experiment& setName(const std::string& n);
+  Experiment& setBaseline(double km);
+  double baseline_km() const;
+  Experiment& setMatter(double density_g_cm3, double electronFraction = 0.5);
+  double matterDensity_g_cm3() const;
+  double electronFraction() const;
+  /// rho x Y_e, what the oscillation code takes (2.6 x 0.5 = 1.3 for HK).
+  double rhoYe() const;
+
+  // --- detector --------------------------------------------------------
+  Experiment& setDetector(const Detector& det);
+  const Detector& detector() const;
+  bool hasDetector() const;
+  double nNucleons() const;
+
+  // --- beam modes: flux + exposure -------------------------------------
+  Experiment& setFlux(BeamMode mode, const FluxSpec& spec, double pot);
+  Experiment& setPOT(BeamMode mode, double pot);
+  /// Default normalisation applied to fluxes that do not set their own.
+  Experiment& setFluxUnits(double potNorm, double binNormGeV);
+  bool hasBeamMode(BeamMode mode) const;
+  std::vector<BeamMode> beamModes() const;
+  const FluxSpec& flux(BeamMode mode) const;
+  double pot(BeamMode mode) const;
+  /// Loaded (and cached) histograms of a beam mode.
+  const FluxHistograms& fluxHistograms(BeamMode mode) const;
+  /// Neutrinos / cm^2 / POT of one species.
+  double fluxIntegralPerPOT(BeamMode mode, int pdg) const;
+  /// The per-event normalisation weight: fScaleFactor x flux/POT x POT x nucleons.
+  double potWeight(BeamMode mode, int fluxPdg, double fScaleFactor) const;
+  double potWeight(const McSample& sample, double fScaleFactor) const;
+
+  Experiment& setFluxCovariance(const FluxCovarianceSpec& spec);
+  Experiment& setFluxCovariance(const std::string& file, const std::string& matrix = "total_flux_cov",
+                                double ndConstraint = 0.0, const std::string& farPrefix = "sk",
+                                const std::string& nearPrefix = "nd280");
+  const FluxCovarianceSpec& fluxCovariance() const;
+
+  // --- MC samples ------------------------------------------------------
+  Experiment& addMcSample(BeamMode mode, int fluxPdg, int interactionPdg, long nEvents, unsigned seed = 0);
+  Experiment& addMcSample(const McSample& s);
+  Experiment& clearMcSamples();
+  const std::vector<McSample>& mcSamples() const;
+  std::vector<std::string> mcSampleNames() const;
+  const McSample& mcSample(const std::string& name) const;
+  /// MC samples of one beam mode, in list order (this order defines SampleIndex).
+  std::vector<McSample> mcSamples(BeamMode mode) const;
+  /// The seed a sample uses: its own, or one derived from the run seed and its name.
+  unsigned sampleSeed(const McSample& s) const;
+
+  // --- run -------------------------------------------------------------
+  Experiment& setRun(const std::string& workDir, unsigned seed = 20250929);
+  Experiment& setLegacyRngOrder(bool on);
+  const RunSettings& run() const;
+  const std::string& workDir() const;
+  /// `workDir/relative` (or `relative` itself when absolute).
+  std::string path(const std::string& relative) const;
+
+  // --- inspection -------------------------------------------------------
+  std::string describe() const;
+  /// Which production files exist for every MC sample and beam mode.
+  std::string status() const;
+  /// Throw std::runtime_error listing everything a stage needs but is not set.
+  void validate() const;
+
+  /// Raw YAML text of a section this build does not interpret (kept for
+  /// later stages); empty if absent.
+  std::string rawSection(const std::string& key) const;
+  Experiment& setRawSection(const std::string& key, const std::string& yamlText);
+
+private:
+  struct Impl;
+  std::unique_ptr<Impl> impl_;
+};
+
+}  // namespace zaku
+
+#endif  // ZAKU_CORE_EXPERIMENT_H
