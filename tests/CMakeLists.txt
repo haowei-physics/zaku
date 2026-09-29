@@ -66,7 +66,7 @@ set_tests_properties(regression_flux_reference regression_join_reference PROPERT
 
 if(ZAKU_BUILD_APPS)
   add_test(NAME cli_describe COMMAND zaku ${CMAKE_SOURCE_DIR}/configs/hk_t2k_like.yaml describe)
-  add_test(NAME cli_list_samples COMMAND zaku ${CMAKE_SOURCE_DIR}/configs/legacy_hk_mock.yaml list-samples)
-  set_tests_properties(cli_describe cli_list_samples PROPERTIES ENVIRONMENT "${ZAKU_TEST_ENV}" LABELS "unit")
-  set_tests_properties(cli_list_samples PROPERTIES PASS_REGULAR_EXPRESSION "numu_x_numu_200K_FHC")
+  add_test(NAME cli_list_productions COMMAND zaku ${CMAKE_SOURCE_DIR}/configs/legacy_hk_mock.yaml list-productions)
+  set_tests_properties(cli_describe cli_list_productions PROPERTIES ENVIRONMENT "${ZAKU_TEST_ENV}" LABELS "unit")
+  set_tests_properties(cli_list_productions PROPERTIES PASS_REGULAR_EXPRESSION "numu_x_numu_200K_FHC")
 endif()

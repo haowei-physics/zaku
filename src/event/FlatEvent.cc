@@ -51,7 +51,7 @@ bool isNeutrino(int pdg) {
 
 }  // namespace
 
-TruthVariables TruthVariables::compute(const FlatEvent& ev, const SampleContext& ctx, double neutronFraction) {
+TruthVariables TruthVariables::compute(const FlatEvent& ev, const ProductionContext& ctx, double neutronFraction) {
   TruthVariables t;
   t.isRHC = ctx.isRHC;
   t.flux_pdg = ctx.fluxPdg;

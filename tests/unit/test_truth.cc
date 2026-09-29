@@ -46,7 +46,7 @@ int main() {
   ZAKU_CHECK(!ev.emptyFinalState());
   ZAKU_CHECK(!ev.legacyDrop());
 
-  SampleContext ctx;
+  ProductionContext ctx;
   ctx.isRHC = false;
   ctx.fluxPdg = 14;
   ctx.interactionPdg = 14;
@@ -77,7 +77,7 @@ int main() {
   nc.ELep = 0.7f;
   addParticle(nc, 12, 0.0, 0.0, 0.7, 0.7);
   addParticle(nc, 111, 0.0, 0.0, 0.3, std::hypot(0.3, units::m_pi0));
-  SampleContext actx;
+  ProductionContext actx;
   actx.fluxPdg = 14;
   actx.interactionPdg = 12;
   const TruthVariables tnc = TruthVariables::compute(nc, actx);

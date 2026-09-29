@@ -51,9 +51,9 @@ struct FlatEvent {
   std::string describe() const;
 };
 
-/// Per-MC-sample context every event inherits: which beam mode and flux
-/// species it was generated on.
-struct SampleContext {
+/// Per-production context every event inherits: which beam mode and flux
+/// species it was generated on, and which species interacted.
+struct ProductionContext {
   bool isRHC = false;
   int fluxPdg = 14;
   int interactionPdg = 14;
@@ -74,7 +74,7 @@ struct TruthVariables {
   bool isAppearance = false;
 
   /// Compute from an event. `neutronFraction` is the visible fraction of neutron kinetic energy.
-  static TruthVariables compute(const FlatEvent& ev, const SampleContext& ctx, double neutronFraction = 0.0);
+  static TruthVariables compute(const FlatEvent& ev, const ProductionContext& ctx, double neutronFraction = 0.0);
 
   /// Names of every variable a formula can reference, in a fixed order:
   /// the flat-tree scalars first, then the derived ones above.

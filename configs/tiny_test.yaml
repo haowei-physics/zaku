@@ -1,5 +1,5 @@
 # A small production for checking the whole chain by hand: 2000 events per
-# MC sample. Same experiment as hk_t2k_like.yaml otherwise.
+# production. Same experiment as hk_t2k_like.yaml otherwise.
 name: HK_tiny
 baseline_km: 295.0
 matter: { density_g_cm3: 2.6, electron_fraction: 0.5 }
@@ -17,7 +17,7 @@ flux_covariance:
   file: "${ZAKU_DATA}/data/flux/t2kflux_2020_covariance.root"
   nd_constraint: 0.8
 
-mc_samples:
+productions:
   - { beam: FHC, flux: numu,    interaction: numu,    n: 2000 }
   - { beam: FHC, flux: numubar, interaction: numubar, n: 2000 }
   - { beam: FHC, flux: nue,     interaction: nue,     n: 2000 }

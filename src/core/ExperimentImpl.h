@@ -9,7 +9,7 @@
 #include "zaku/core/Detector.h"
 #include "zaku/core/Experiment.h"
 #include "zaku/core/FluxSpec.h"
-#include "zaku/core/McSample.h"
+#include "zaku/core/Production.h"
 #include "zaku/core/RunSettings.h"
 #include "zaku/flux/FluxHistograms.h"
 
@@ -34,7 +34,7 @@ struct Experiment::Impl {
   double defaultBinNormGeV = 0.05;
   bool fluxUnitsSet = false;
   FluxCovarianceSpec fluxCov;
-  std::vector<McSample> mcSamples;
+  std::vector<Production> productions;
   RunSettings run;
   std::map<std::string, std::string> raw;  ///< sections kept verbatim for later stages
   /// Loaded flux histograms (immutable once loaded, so sharing between copies is fine).

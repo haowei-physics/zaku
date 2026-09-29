@@ -28,9 +28,9 @@ generator-ready rebinning, the flux covariance reader, and the event layer
 a time; `zaku --help` lists which are available in a given build.
 
 ```bash
-zaku configs/hk_t2k_like.yaml describe        # what the experiment asserts
-zaku configs/hk_t2k_like.yaml list-samples    # MC sample names, in SampleIndex order
-zaku configs/hk_t2k_like.yaml status          # which production files exist
+zaku configs/hk_t2k_like.yaml describe          # what the experiment asserts
+zaku configs/hk_t2k_like.yaml list-productions  # generator productions, in index order
+zaku configs/hk_t2k_like.yaml status            # which production files exist
 ```
 
 ## Build

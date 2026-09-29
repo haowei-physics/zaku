@@ -38,9 +38,9 @@ int main() {
   exp.setFlux(BeamMode::FHC, FluxSpec::t2k(fhcFile, "sk"), 6.75e21);
   exp.setFlux(BeamMode::RHC, FluxSpec::t2k(rhcFile, "sk"), 2.025e22);
   exp.setFluxCovariance(scratch + "/cov.root", "total_flux_cov", 0.8);
-  exp.addMcSample(BeamMode::FHC, 14, 14, 200000);
-  exp.addMcSample(BeamMode::FHC, 14, 12, 50000, 77);
-  exp.addMcSample(BeamMode::RHC, -14, -14, 200000);
+  exp.addProduction(BeamMode::FHC, 14, 14, 200000);
+  exp.addProduction(BeamMode::FHC, 14, 12, 50000, 77);
+  exp.addProduction(BeamMode::RHC, -14, -14, 200000);
   exp.setRun(scratch + "/work", 20250929);
 
   ZAKU_CHECK_STR_EQ(exp.name(), "HK");
@@ -52,15 +52,15 @@ int main() {
   ZAKU_CHECK(exp.hasBeamMode(BeamMode::RHC));
   ZAKU_CHECK_EQ(static_cast<int>(exp.beamModes().size()), 2);
   ZAKU_CHECK_CLOSE(exp.pot(BeamMode::RHC), 2.025e22, 1e-12);
-  ZAKU_CHECK_EQ(static_cast<int>(exp.mcSamples().size()), 3);
-  ZAKU_CHECK_STR_EQ(exp.mcSampleNames()[1], "numu_x_nue_50K_FHC");
-  ZAKU_CHECK_EQ(static_cast<int>(exp.mcSamples(BeamMode::RHC).size()), 1);
-  ZAKU_CHECK(exp.mcSample("numu_x_nue_50K_FHC").isAppearance());
-  ZAKU_CHECK_EQ(static_cast<int>(exp.sampleSeed(exp.mcSample("numu_x_nue_50K_FHC"))), 77);
-  ZAKU_CHECK(exp.sampleSeed(exp.mcSample("numu_x_numu_200K_FHC")) != 0u);
-  ZAKU_CHECK(exp.sampleSeed(exp.mcSample("numu_x_numu_200K_FHC")) != exp.sampleSeed(exp.mcSample("numubar_x_numubar_200K_RHC")));
-  ZAKU_CHECK_THROWS(exp.addMcSample(BeamMode::FHC, 14, 14, 200000));  // duplicate name
-  ZAKU_CHECK_THROWS(exp.mcSample("nope"));
+  ZAKU_CHECK_EQ(static_cast<int>(exp.productions().size()), 3);
+  ZAKU_CHECK_STR_EQ(exp.productionNames()[1], "numu_x_nue_50K_FHC");
+  ZAKU_CHECK_EQ(static_cast<int>(exp.productions(BeamMode::RHC).size()), 1);
+  ZAKU_CHECK(exp.production("numu_x_nue_50K_FHC").isAppearance());
+  ZAKU_CHECK_EQ(static_cast<int>(exp.productionSeed(exp.production("numu_x_nue_50K_FHC"))), 77);
+  ZAKU_CHECK(exp.productionSeed(exp.production("numu_x_numu_200K_FHC")) != 0u);
+  ZAKU_CHECK(exp.productionSeed(exp.production("numu_x_numu_200K_FHC")) != exp.productionSeed(exp.production("numubar_x_numubar_200K_RHC")));
+  ZAKU_CHECK_THROWS(exp.addProduction(BeamMode::FHC, 14, 14, 200000));  // duplicate name
+  ZAKU_CHECK_THROWS(exp.production("nope"));
   ZAKU_CHECK_STR_EQ(exp.path("a/b.root"), scratch + "/work/a/b.root");
   ZAKU_CHECK_STR_EQ(exp.path("/abs.root"), "/abs.root");
 
@@ -69,7 +69,7 @@ int main() {
   ZAKU_CHECK_CLOSE(exp.fluxIntegralPerPOT(BeamMode::FHC, 14), perPot, 1e-12);
   const double fScale = 4.456765e-44;
   ZAKU_CHECK_CLOSE(exp.potWeight(BeamMode::FHC, 14, fScale), fScale * perPot * 6.75e21 * exp.nNucleons(), 1e-12);
-  ZAKU_CHECK_CLOSE(exp.potWeight(exp.mcSample("numu_x_nue_50K_FHC"), fScale), exp.potWeight(BeamMode::FHC, 14, fScale), 1e-12);
+  ZAKU_CHECK_CLOSE(exp.potWeight(exp.production("numu_x_nue_50K_FHC"), fScale), exp.potWeight(BeamMode::FHC, 14, fScale), 1e-12);
   ZAKU_CHECK_THROWS(exp.flux(BeamMode::RHC).histogram(16));
 
   // setFluxUnits propagates to the loaded fluxes
@@ -98,9 +98,9 @@ int main() {
   ZAKU_CHECK_STR_EQ(back.flux(BeamMode::RHC).file, rhcFile);
   ZAKU_CHECK_STR_EQ(back.flux(BeamMode::RHC).histogram(-12), "enu_sk_nueb");
   ZAKU_CHECK_CLOSE(back.fluxCovariance().ndConstraint, 0.8, 1e-12);
-  ZAKU_CHECK_EQ(static_cast<int>(back.mcSamples().size()), 3);
-  ZAKU_CHECK_STR_EQ(back.mcSampleNames()[2], "numubar_x_numubar_200K_RHC");
-  ZAKU_CHECK_EQ(static_cast<int>(back.mcSample("numu_x_nue_50K_FHC").seed), 77);
+  ZAKU_CHECK_EQ(static_cast<int>(back.productions().size()), 3);
+  ZAKU_CHECK_STR_EQ(back.productionNames()[2], "numubar_x_numubar_200K_RHC");
+  ZAKU_CHECK_EQ(static_cast<int>(back.production("numu_x_nue_50K_FHC").seed), 77);
   ZAKU_CHECK_EQ(static_cast<int>(back.run().seed), 20250929);
   ZAKU_CHECK_STR_EQ(back.workDir(), scratch + "/work");
   ZAKU_CHECK(back.rawSection("response").find("tables") != std::string::npos);
@@ -119,7 +119,7 @@ int main() {
          "beam_modes:\n"
          "  FHC: {pot: 6.75e21, flux: {file: exp_flux_fhc.root, t2k_detector: sk}}\n"
          "  RHC: {pot: 2.025e22, flux: {file: \"${ZAKU_TEST_FLUX_DIR}/exp_flux_rhc.root\", histograms: {numubar: enu_sk_numub}}}\n"
-         "mc_samples:\n"
+         "productions:\n"
          "  - {beam: FHC, flux: numu, interaction: numu, n: 2000}\n"
          "  - {beam: RHC, flux: numubar, n: 2000}\n"
          "run: {work_dir: work_rel, seed: 5}\n"
@@ -130,7 +130,7 @@ int main() {
   ZAKU_CHECK_STR_EQ(fromFile.flux(BeamMode::FHC).file, scratch + "/exp_flux_fhc.root");
   ZAKU_CHECK_STR_EQ(fromFile.flux(BeamMode::RHC).file, scratch + "/exp_flux_rhc.root");
   ZAKU_CHECK_STR_EQ(fromFile.flux(BeamMode::FHC).histogram(-12), "enu_sk_nueb");
-  ZAKU_CHECK_EQ(fromFile.mcSample("numubar_x_numubar_2K_RHC").interactionPdg, -14);
+  ZAKU_CHECK_EQ(fromFile.production("numubar_x_numubar_2K_RHC").interactionPdg, -14);
   ZAKU_CHECK_CLOSE(fromFile.nNucleons(), 1.132e35, 1e-12);
   ZAKU_CHECK_STR_EQ(fromFile.workDir(), scratch + "/work_rel");
   ZAKU_CHECK(!fromFile.rawSection("samples").empty());

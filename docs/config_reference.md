@@ -30,9 +30,9 @@ Conventions:
 | `beam_modes.<FHC\|RHC>.pot` | `setPOT` | Exposure of that beam mode in protons on target. |
 | `beam_modes.<FHC\|RHC>.flux` | `setFlux` | See below. |
 | `flux_covariance` | `setFluxCovariance` | See below. |
-| `mc_samples` | `addMcSample` | List of generator productions, see below. The list order defines `SampleIndex`. |
+| `productions` | `addProduction` | List of generator productions, see below. The list order defines `SampleIndex`. |
 | `run.work_dir` | `setRun` | Directory under which every stage reads and writes. |
-| `run.seed` | `setRun` | Master random seed; per-sample seeds are derived from it and the sample name unless a sample sets its own. |
+| `run.seed` | `setRun` | Master random seed; per-production seeds are derived from it and the production name unless a production sets its own. |
 | `run.legacy_rng_order` | `setLegacyRngOrder` | Reproduce the legacy macros' random-number sequence exactly (regression use). |
 
 ### `detector`
@@ -81,15 +81,17 @@ flux_covariance:
   units: GeV                    # unit of the TAxis edges
 ```
 
-### `mc_samples`
+### `productions`
 
 ```yaml
-mc_samples:
-  - { beam: FHC, flux: numu, interaction: numu, n: 200000 }          # disappearance sample
+productions:
+  - { beam: FHC, flux: numu, interaction: numu, n: 200000 }          # disappearance production
   - { beam: FHC, flux: numu, interaction: nue,  n: 50000, seed: 7 }  # appearance: thrown on the numu flux
 ```
 
-`interaction` defaults to `flux`. The sample name is
+A production is one generator run; it is not an analysis sample (samples are
+the reconstructed and selected categories defined under `samples`).
+`interaction` defaults to `flux`. The production name is
 `<flux>_x_<interaction>_<N>_<beam>` with `N` as `200K` for multiples of 1000
 (`numu_x_nue_50K_FHC`); its files live in `<work_dir>/<flux>/` (see
 [pipeline.md](pipeline.md)).
@@ -98,4 +100,4 @@ mc_samples:
 
 `configs/hk_t2k_like.yaml` is the HK-on-T2K-beam experiment; `configs/legacy_hk_mock.yaml`
 reproduces the legacy production bit for bit; `configs/tiny_test.yaml` is the
-same experiment with 2000 events per sample.
+same experiment with 2000 events per production.

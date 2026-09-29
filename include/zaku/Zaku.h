@@ -12,7 +12,7 @@
 #include "zaku/core/Units.h"
 #include "zaku/core/Detector.h"
 #include "zaku/core/FluxSpec.h"
-#include "zaku/core/McSample.h"
+#include "zaku/core/Production.h"
 #include "zaku/core/Manifest.h"
 #include "zaku/core/Provenance.h"
 #include "zaku/core/RunSettings.h"

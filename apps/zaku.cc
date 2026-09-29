@@ -23,7 +23,7 @@ const StageInfo kStages[] = {
     {"describe", "print the experiment as this build understands it", true},
     {"validate", "check that the experiment is complete and its inputs exist", true},
     {"status", "report which production files exist", true},
-    {"list-samples", "print the MC sample names in index order", true},
+    {"list-productions", "print the production names in index order", true},
     {"list-beam-modes", "print the beam modes with POT and flux integrals", true},
     {"prepare", "write generation, weight and flatten inputs + manifests", false},
     {"prepare-generation", "write generator cards/seed files + generate manifest", false},
@@ -77,8 +77,8 @@ int run(const Options& opt) {
     std::printf("%s", exp.status().c_str());
     return 0;
   }
-  if (stage == "list-samples") {
-    for (const auto& s : exp.mcSamples()) {
+  if (stage == "list-productions") {
+    for (const auto& s : exp.productions()) {
       if (!opt.sample.empty() && opt.sample != s.name()) continue;
       std::printf("%s\n", s.name().c_str());
     }

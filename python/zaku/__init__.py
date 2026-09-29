@@ -68,8 +68,8 @@ looksLikeMeVAxis = _ns.looksLikeMeVAxis
 Experiment = _ns.Experiment
 FluxSpec = _ns.FluxSpec
 FluxCovarianceSpec = _ns.FluxCovarianceSpec
-McSample = _ns.McSample
-SampleLayout = _ns.SampleLayout
+Production = _ns.Production
+Layout = _ns.Layout
 Manifest = _ns.Manifest
 ManifestJob = _ns.ManifestJob
 Provenance = _ns.Provenance
@@ -78,7 +78,7 @@ FluxHistograms = _ns.FluxHistograms
 FluxPreparer = _ns.FluxPreparer
 FluxCovarianceInput = _ns.FluxCovarianceInput
 FlatEvent = _ns.FlatEvent
-SampleContext = _ns.SampleContext
+ProductionContext = _ns.ProductionContext
 TruthVariables = _ns.TruthVariables
 FlatTreeCursor = _ns.FlatTreeCursor
 DialKnots = _ns.DialKnots
@@ -125,9 +125,9 @@ __all__ = [
     "version", "versionMajor", "versionMinor", "versionPatch", "schemaVersion", "buildInfo",
     "Flavour", "NuSpecies", "BeamMode", "Target", "Detector", "NeutTarget", "EnergyUnit", "units",
     "toGeV", "fromGeV", "histogramToGeV", "requireGeVAxis", "looksLikeMeVAxis",
-    "Experiment", "FluxSpec", "FluxCovarianceSpec", "McSample", "SampleLayout", "Manifest", "ManifestJob",
+    "Experiment", "FluxSpec", "FluxCovarianceSpec", "Production", "Layout", "Manifest", "ManifestJob",
     "Provenance", "RunSettings", "FluxHistograms", "FluxPreparer", "FluxCovarianceInput",
-    "FlatEvent", "SampleContext", "TruthVariables", "FlatTreeCursor", "DialKnots", "T2KRWWeightCursor",
+    "FlatEvent", "ProductionContext", "TruthVariables", "FlatTreeCursor", "DialKnots", "T2KRWWeightCursor",
     "EventJoin", "JoinOptions", "JoinStats",
     "DATA_DIR", "strings", "to_numpy",
 ]

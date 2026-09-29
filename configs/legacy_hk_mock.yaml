@@ -26,7 +26,7 @@ flux_covariance:
 
 # The legacy FakeSelect chain order per beam mode: numu, numubar, nue, nuebar,
 # numu->nue, numubar->nuebar. This order defines SampleIndex.
-mc_samples:
+productions:
   - { beam: FHC, flux: numu,    interaction: numu,    n: 200000 }
   - { beam: FHC, flux: numubar, interaction: numubar, n: 50000 }
   - { beam: FHC, flux: nue,     interaction: nue,     n: 200000 }

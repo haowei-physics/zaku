@@ -7,7 +7,7 @@
 
 #include "zaku/core/Detector.h"
 #include "zaku/core/FluxSpec.h"
-#include "zaku/core/McSample.h"
+#include "zaku/core/Production.h"
 #include "zaku/core/RunSettings.h"
 #include "zaku/core/Types.h"
 
@@ -74,7 +74,7 @@ public:
   double fluxIntegralPerPOT(BeamMode mode, int pdg) const;
   /// The per-event normalisation weight: fScaleFactor x flux/POT x POT x nucleons.
   double potWeight(BeamMode mode, int fluxPdg, double fScaleFactor) const;
-  double potWeight(const McSample& sample, double fScaleFactor) const;
+  double potWeight(const Production& production, double fScaleFactor) const;
 
   Experiment& setFluxCovariance(const FluxCovarianceSpec& spec);
   Experiment& setFluxCovariance(const std::string& file, const std::string& matrix = "total_flux_cov",
@@ -82,17 +82,17 @@ public:
                                 const std::string& nearPrefix = "nd280");
   const FluxCovarianceSpec& fluxCovariance() const;
 
-  // --- MC samples ------------------------------------------------------
-  Experiment& addMcSample(BeamMode mode, int fluxPdg, int interactionPdg, long nEvents, unsigned seed = 0);
-  Experiment& addMcSample(const McSample& s);
-  Experiment& clearMcSamples();
-  const std::vector<McSample>& mcSamples() const;
-  std::vector<std::string> mcSampleNames() const;
-  const McSample& mcSample(const std::string& name) const;
-  /// MC samples of one beam mode, in list order (this order defines SampleIndex).
-  std::vector<McSample> mcSamples(BeamMode mode) const;
-  /// The seed a sample uses: its own, or one derived from the run seed and its name.
-  unsigned sampleSeed(const McSample& s) const;
+  // --- productions ------------------------------------------------------
+  Experiment& addProduction(BeamMode mode, int fluxPdg, int interactionPdg, long nEvents, unsigned seed = 0);
+  Experiment& addProduction(const Production& s);
+  Experiment& clearProductions();
+  const std::vector<Production>& productions() const;
+  std::vector<std::string> productionNames() const;
+  const Production& production(const std::string& name) const;
+  /// productions of one beam mode, in list order (this order defines SampleIndex).
+  std::vector<Production> productions(BeamMode mode) const;
+  /// The seed a production uses: its own, or one derived from the run seed and its name.
+  unsigned productionSeed(const Production& s) const;
 
   // --- run -------------------------------------------------------------
   Experiment& setRun(const std::string& workDir, unsigned seed = 20250929);
@@ -104,7 +104,7 @@ public:
 
   // --- inspection -------------------------------------------------------
   std::string describe() const;
-  /// Which production files exist for every MC sample and beam mode.
+  /// Which production files exist for every production and beam mode.
   std::string status() const;
   /// Throw std::runtime_error listing everything a stage needs but is not set.
   void validate() const;

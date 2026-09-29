@@ -25,7 +25,7 @@ flux_covariance:
 # One generator production per (beam mode, flux species, interaction species).
 # Appearance samples are generated as fully converted and weighted by the
 # oscillation probability later.
-mc_samples:
+productions:
   - { beam: FHC, flux: numu,    interaction: numu,    n: 200000 }
   - { beam: FHC, flux: numubar, interaction: numubar, n: 50000 }
   - { beam: FHC, flux: nue,     interaction: nue,     n: 200000 }

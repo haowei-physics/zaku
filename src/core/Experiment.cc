@@ -126,7 +126,7 @@ double Experiment::potWeight(BeamMode mode, int fluxPdg, double fScaleFactor) co
   // Legacy expression order kept for bit-level reproducibility.
   return fScaleFactor * fluxIntegralPerPOT(mode, fluxPdg) * pot(mode) * nNucleons();
 }
-double Experiment::potWeight(const McSample& s, double fScaleFactor) const {
+double Experiment::potWeight(const Production& s, double fScaleFactor) const {
   return potWeight(s.beamMode, s.fluxPdg, fScaleFactor);
 }
 
@@ -146,49 +146,49 @@ Experiment& Experiment::setFluxCovariance(const std::string& file, const std::st
 }
 const FluxCovarianceSpec& Experiment::fluxCovariance() const { return impl_->fluxCov; }
 
-// --- MC samples -----------------------------------------------------------
+// --- productions -----------------------------------------------------------
 
-Experiment& Experiment::addMcSample(BeamMode mode, int fluxPdg, int interactionPdg, long nEvents, unsigned seed) {
-  return addMcSample(McSample(mode, fluxPdg, interactionPdg, nEvents, seed));
+Experiment& Experiment::addProduction(BeamMode mode, int fluxPdg, int interactionPdg, long nEvents, unsigned seed) {
+  return addProduction(Production(mode, fluxPdg, interactionPdg, nEvents, seed));
 }
-Experiment& Experiment::addMcSample(const McSample& s) {
-  if (s.nEvents <= 0) throw std::invalid_argument("Experiment::addMcSample: nEvents must be positive");
+Experiment& Experiment::addProduction(const Production& s) {
+  if (s.nEvents <= 0) throw std::invalid_argument("Experiment::addProduction: nEvents must be positive");
   NuSpecies::fromPdg(s.fluxPdg);
   NuSpecies::fromPdg(s.interactionPdg);
-  for (const auto& other : impl_->mcSamples) {
+  for (const auto& other : impl_->productions) {
     if (other.name() == s.name()) {
-      throw std::invalid_argument("Experiment::addMcSample: a sample named '" + s.name() + "' already exists");
+      throw std::invalid_argument("Experiment::addProduction: a production named '" + s.name() + "' already exists");
     }
   }
-  impl_->mcSamples.push_back(s);
+  impl_->productions.push_back(s);
   return *this;
 }
-Experiment& Experiment::clearMcSamples() {
-  impl_->mcSamples.clear();
+Experiment& Experiment::clearProductions() {
+  impl_->productions.clear();
   return *this;
 }
-const std::vector<McSample>& Experiment::mcSamples() const { return impl_->mcSamples; }
-std::vector<std::string> Experiment::mcSampleNames() const {
+const std::vector<Production>& Experiment::productions() const { return impl_->productions; }
+std::vector<std::string> Experiment::productionNames() const {
   std::vector<std::string> out;
-  for (const auto& s : impl_->mcSamples) out.push_back(s.name());
+  for (const auto& s : impl_->productions) out.push_back(s.name());
   return out;
 }
-const McSample& Experiment::mcSample(const std::string& name) const {
-  for (const auto& s : impl_->mcSamples) {
+const Production& Experiment::production(const std::string& name) const {
+  for (const auto& s : impl_->productions) {
     if (s.name() == name) return s;
   }
-  throw std::out_of_range("Experiment '" + impl_->name + "': no MC sample named '" + name + "'");
+  throw std::out_of_range("Experiment '" + impl_->name + "': no production named '" + name + "'");
 }
-std::vector<McSample> Experiment::mcSamples(BeamMode mode) const {
-  std::vector<McSample> out;
-  for (const auto& s : impl_->mcSamples) {
+std::vector<Production> Experiment::productions(BeamMode mode) const {
+  std::vector<Production> out;
+  for (const auto& s : impl_->productions) {
     if (s.beamMode == mode) out.push_back(s);
   }
   return out;
 }
-unsigned Experiment::sampleSeed(const McSample& s) const {
+unsigned Experiment::productionSeed(const Production& s) const {
   if (s.seed != 0) return s.seed;
-  // Deterministic per-sample seed from the run seed and the sample name.
+  // Deterministic per-production seed from the run seed and the production name.
   const std::size_t h = std::hash<std::string>{}(s.name() + "#" + std::to_string(impl_->run.seed));
   unsigned seed = static_cast<unsigned>(h & 0x7fffffffu);
   if (seed == 0) seed = 1;
@@ -232,8 +232,8 @@ std::string Experiment::describe() const {
     os << "  flux covariance " << impl_->fluxCov.file << ":" << impl_->fluxCov.matrix << " (far '"
        << impl_->fluxCov.farPrefix << "', ND constraint " << impl_->fluxCov.ndConstraint << ")\n";
   }
-  os << "  " << impl_->mcSamples.size() << " MC sample(s):\n";
-  for (const auto& s : impl_->mcSamples) os << "    " << s.describe() << " [seed " << sampleSeed(s) << "]\n";
+  os << "  " << impl_->productions.size() << " production(s):\n";
+  for (const auto& s : impl_->productions) os << "    " << s.describe() << " [seed " << productionSeed(s) << "]\n";
   os << "  run: work dir '" << impl_->run.workDir << "', seed " << impl_->run.seed
      << (impl_->run.legacyRngOrder ? ", legacy RNG order" : "") << "\n";
   for (const auto& kv : impl_->raw) os << "  section '" << kv.first << "' kept for a later stage\n";
@@ -244,18 +244,18 @@ std::string Experiment::status() const {
   std::ostringstream os;
   os << "status of '" << impl_->name << "' in '" << impl_->run.workDir << "'\n";
   auto mark = [&](const std::string& rel) { return fileExists(path(rel)) ? "ok      " : "missing "; };
-  os << "  " << std::left << std::setw(36) << "MC sample" << "generator flat      weight    recon     spline\n";
-  for (const auto& s : impl_->mcSamples) {
-    os << "  " << std::left << std::setw(36) << s.name() << mark(SampleLayout::generatorFile(s)) << "  "
-       << mark(SampleLayout::flatFile(s)) << "  " << mark(SampleLayout::weightFile(s)) << "  "
-       << mark(SampleLayout::reconFile(s)) << "  " << mark(SampleLayout::splineFile(s)) << "\n";
+  os << "  " << std::left << std::setw(36) << "production" << "generator flat      weight    recon     spline\n";
+  for (const auto& s : impl_->productions) {
+    os << "  " << std::left << std::setw(36) << s.name() << mark(Layout::generatorFile(s)) << "  "
+       << mark(Layout::flatFile(s)) << "  " << mark(Layout::weightFile(s)) << "  "
+       << mark(Layout::reconFile(s)) << "  " << mark(Layout::splineFile(s)) << "\n";
   }
   for (const auto& kv : impl_->beams) {
     if (!kv.second.hasFlux) continue;
-    os << "  " << std::left << std::setw(36) << ("select " + toString(kv.first)) << mark(SampleLayout::selectFile(kv.first))
+    os << "  " << std::left << std::setw(36) << ("select " + toString(kv.first)) << mark(Layout::selectFile(kv.first))
        << "\n";
   }
-  os << "  " << std::left << std::setw(36) << "parameters" << mark(SampleLayout::parametersDirectory()) << "\n";
+  os << "  " << std::left << std::setw(36) << "parameters" << mark(Layout::parametersDirectory()) << "\n";
   return os.str();
 }
 
@@ -275,11 +275,11 @@ void Experiment::validate() const {
   if (impl_->fluxCov.valid() && !fileExists(impl_->fluxCov.file)) {
     problems.push_back("flux covariance file not found: '" + impl_->fluxCov.file + "'");
   }
-  for (const auto& s : impl_->mcSamples) {
+  for (const auto& s : impl_->productions) {
     if (!hasBeamMode(s.beamMode)) {
-      problems.push_back("MC sample " + s.name() + " uses beam mode " + toString(s.beamMode) + " which has no flux");
+      problems.push_back("production " + s.name() + " uses beam mode " + toString(s.beamMode) + " which has no flux");
     } else if (!impl_->beams.at(s.beamMode).flux.has(s.fluxPdg)) {
-      problems.push_back("MC sample " + s.name() + " needs a " + s.fluxSpecies().name() + " flux histogram for " +
+      problems.push_back("production " + s.name() + " needs a " + s.fluxSpecies().name() + " flux histogram for " +
                          toString(s.beamMode));
     }
   }

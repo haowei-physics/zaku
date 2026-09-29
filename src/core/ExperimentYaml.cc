@@ -16,7 +16,7 @@ namespace zaku {
 
 const std::vector<std::string>& experimentKnownKeys() {
   static const std::vector<std::string> k = {"name",        "baseline_km",     "matter",     "detector",
-                                             "flux_units",  "beam_modes",      "flux_covariance", "mc_samples",
+                                             "flux_units",  "beam_modes",      "flux_covariance", "productions",
                                              "run"};
   return k;
 }
@@ -221,16 +221,16 @@ Experiment Experiment::fromYamlString(const std::string& yaml, const std::string
     if (c["units"]) s.units = energyUnitFromString(c["units"].as<std::string>());
     exp.setFluxCovariance(s);
   }
-  if (root["mc_samples"]) {
-    for (const auto& s : root["mc_samples"]) {
-      rejectUnknown(s, {"beam", "flux", "interaction", "n", "seed"}, "mc_samples[]");
-      McSample m;
-      m.beamMode = beamModeFromString(require<std::string>(s, "beam", "mc_samples[]"));
-      m.fluxPdg = NuSpecies::fromName(require<std::string>(s, "flux", "mc_samples[]")).pdg();
+  if (root["productions"]) {
+    for (const auto& s : root["productions"]) {
+      rejectUnknown(s, {"beam", "flux", "interaction", "n", "seed"}, "productions[]");
+      Production m;
+      m.beamMode = beamModeFromString(require<std::string>(s, "beam", "productions[]"));
+      m.fluxPdg = NuSpecies::fromName(require<std::string>(s, "flux", "productions[]")).pdg();
       m.interactionPdg = s["interaction"] ? NuSpecies::fromName(s["interaction"].as<std::string>()).pdg() : m.fluxPdg;
-      m.nEvents = require<long>(s, "n", "mc_samples[]");
+      m.nEvents = require<long>(s, "n", "productions[]");
       m.seed = get<unsigned>(s, "seed", 0u);
-      exp.addMcSample(m);
+      exp.addProduction(m);
     }
   }
   if (root["run"]) {
@@ -299,9 +299,9 @@ std::string Experiment::toYaml() const {
     c["units"] = toString(impl.fluxCov.units);
     root["flux_covariance"] = c;
   }
-  if (!impl.mcSamples.empty()) {
+  if (!impl.productions.empty()) {
     YAML::Node list;
-    for (const auto& s : impl.mcSamples) {
+    for (const auto& s : impl.productions) {
       YAML::Node m;
       m["beam"] = toString(s.beamMode);
       m["flux"] = s.fluxSpecies().name();
@@ -311,7 +311,7 @@ std::string Experiment::toYaml() const {
       m.SetStyle(YAML::EmitterStyle::Flow);
       list.push_back(m);
     }
-    root["mc_samples"] = list;
+    root["productions"] = list;
   }
   {
     YAML::Node r;

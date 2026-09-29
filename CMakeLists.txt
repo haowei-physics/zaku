@@ -49,7 +49,7 @@ set(ZAKU_SOURCES
   src/core/Units.cc
   src/core/Detector.cc
   src/core/FluxSpec.cc
-  src/core/McSample.cc
+  src/core/Production.cc
   src/core/Manifest.cc
   src/core/Provenance.cc
   src/core/Experiment.cc
@@ -72,7 +72,7 @@ set(ZAKU_DICT_HEADERS
   zaku/core/Units.h
   zaku/core/Detector.h
   zaku/core/FluxSpec.h
-  zaku/core/McSample.h
+  zaku/core/Production.h
   zaku/core/Manifest.h
   zaku/core/Provenance.h
   zaku/core/RunSettings.h

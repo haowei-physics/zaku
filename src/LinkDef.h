@@ -14,7 +14,7 @@
 
 #pragma link C++ namespace zaku;
 #pragma link C++ namespace zaku::units;
-#pragma link C++ namespace zaku::SampleLayout;
+#pragma link C++ namespace zaku::Layout;
 #pragma link C++ namespace zaku::FluxPreparer;
 
 // Enums are deliberately not listed: an explicit '#pragma link C++ enum' puts
@@ -37,9 +37,9 @@
 #pragma link C++ struct zaku::FluxSpec+;
 #pragma link C++ struct zaku::FluxCovarianceSpec+;
 
-// core/McSample.h
-#pragma link C++ struct zaku::McSample+;
-#pragma link C++ class std::vector<zaku::McSample>+;
+// core/Production.h
+#pragma link C++ struct zaku::Production+;
+#pragma link C++ class std::vector<zaku::Production>+;
 
 // core/Manifest.h
 #pragma link C++ struct zaku::ManifestJob+;
@@ -61,7 +61,7 @@
 
 // event/
 #pragma link C++ struct zaku::FlatEvent+;
-#pragma link C++ struct zaku::SampleContext+;
+#pragma link C++ struct zaku::ProductionContext+;
 #pragma link C++ struct zaku::TruthVariables+;
 #pragma link C++ class zaku::FlatTreeCursor-;
 #pragma link C++ struct zaku::DialKnots+;
