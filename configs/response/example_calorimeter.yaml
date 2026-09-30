@@ -1,0 +1,29 @@
+# An illustrative response for a tracking-calorimeter (NOvA-like) detector.
+# The numbers are round placeholders chosen to exercise the machinery, not a
+# measurement: replace them with your detector design. Three categories by
+# true interaction type, each binned in Enu_true (GeV); columns numuCC and
+# nueCC feed the samples of configs/samples/nova_like.yaml.
+categories:
+  - { name: numuCC, select: "cc && abs(PDGnu) == 14" }
+  - { name: nueCC,  select: "cc && abs(PDGnu) == 12" }
+  - { name: NC,     select: "!cc" }
+tables:
+  - category: numuCC
+    axes: { Enu_true: [0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 30.0] }
+    efficiency: 1.0
+    probabilities:
+      numuCC: [0.55, 0.65, 0.70, 0.72, 0.72, 0.70, 0.60]
+      nueCC:  [0.002, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002]
+  - category: nueCC
+    axes: { Enu_true: [0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 30.0] }
+    efficiency: 1.0
+    probabilities:
+      numuCC: [0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005]
+      nueCC:  [0.50, 0.60, 0.65, 0.65, 0.60, 0.55, 0.50]
+  - category: NC
+    axes: { Enu_true: [0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 30.0] }
+    efficiency: 1.0
+    probabilities:
+      numuCC: [0.03, 0.04, 0.04, 0.03, 0.02, 0.02, 0.01]
+      nueCC:  [0.010, 0.015, 0.015, 0.010, 0.008, 0.005, 0.003]
+normalise_probabilities: false

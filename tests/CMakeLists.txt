@@ -3,11 +3,16 @@
 
 find_program(ZAKU_PYTHON python3 REQUIRED)
 find_program(ZAKU_ROOT_EXE root HINTS ${ROOT_BINDIR} REQUIRED)
+get_filename_component(ZAKU_ROOTSYS "${ROOT_BINDIR}" DIRECTORY)
 
+# The tests carry their own ROOT and Zaku environment so they run from a plain
+# shell (no setup script sourced).
 set(ZAKU_TEST_ENV
-  "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/lib:$ENV{LD_LIBRARY_PATH}"
+  "ROOTSYS=${ZAKU_ROOTSYS}"
+  "PATH=${CMAKE_BINARY_DIR}/bin:${ROOT_BINDIR}:$ENV{PATH}"
+  "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/lib:${ROOT_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH}"
   "ROOT_INCLUDE_PATH=${CMAKE_SOURCE_DIR}/include:${CMAKE_BINARY_DIR}/include:$ENV{ROOT_INCLUDE_PATH}"
-  "PYTHONPATH=${CMAKE_SOURCE_DIR}/python:$ENV{PYTHONPATH}"
+  "PYTHONPATH=${CMAKE_SOURCE_DIR}/python:${ROOT_LIBRARY_DIR}:$ENV{PYTHONPATH}"
   "ZAKU_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
   "ZAKU_BINARY_DIR=${CMAKE_BINARY_DIR}"
   "ZAKU_DATA=${CMAKE_SOURCE_DIR}"
@@ -63,6 +68,24 @@ zaku_add_python_test(python_experiment python/test_experiment.py python unit)
 zaku_add_cxx_test(regression_flux_reference regression/test_flux_reference.cc regression)
 zaku_add_cxx_test(regression_join_reference regression/test_join_reference.cc regression)
 set_tests_properties(regression_flux_reference regression_join_reference PROPERTIES SKIP_RETURN_CODE 77)
+
+# --- Stage 2 ----------------------------------------------------------------
+zaku_add_cxx_test(test_formula_response unit/test_formula_response.cc unit)
+zaku_add_cxx_test(test_smearing_reco    unit/test_smearing_reco.cc    unit)
+zaku_add_cxx_test(test_binning_samples  unit/test_binning_samples.cc  unit)
+zaku_add_cxx_test(test_oscillator       unit/test_oscillator.cc       unit)
+zaku_add_python_test(python_detector python/test_detector.py python unit)
+zaku_add_cxx_test(regression_recon_reference  regression/test_recon_reference.cc  regression)
+zaku_add_cxx_test(regression_select_reference regression/test_select_reference.cc regression)
+set_tests_properties(regression_recon_reference regression_select_reference PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 3600)
+
+if(ZAKU_BUILD_APPS)
+  add_test(NAME cli_show_response COMMAND zaku ${CMAKE_SOURCE_DIR}/configs/hk_t2k_like.yaml show-response)
+  add_test(NAME cli_show_samples COMMAND zaku ${CMAKE_SOURCE_DIR}/configs/legacy_hk_mock.yaml show-samples)
+  set_tests_properties(cli_show_response cli_show_samples PROPERTIES ENVIRONMENT "${ZAKU_TEST_ENV}" LABELS "unit")
+  set_tests_properties(cli_show_response PROPERTIES PASS_REGULAR_EXPRESSION "9 categories")
+  set_tests_properties(cli_show_samples PROPERTIES PASS_REGULAR_EXPRESSION "RHC_1Re0de")
+endif()
 
 if(ZAKU_BUILD_APPS)
   add_test(NAME cli_describe COMMAND zaku ${CMAKE_SOURCE_DIR}/configs/hk_t2k_like.yaml describe)

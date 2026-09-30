@@ -40,4 +40,14 @@ productions:
   - { beam: RHC, flux: numu,    interaction: nue,     n: 50000 }
   - { beam: RHC, flux: numubar, interaction: nuebar,  n: 50000 }
 
+# --- fake detector, exactly as the legacy macros --------------------------------
+response: { legacy_file: "${ZAKU_DATA}/data/hk/response.root", assignment: draw }
+smearing:
+  file: "${ZAKU_DATA}/data/hk/smearing.root"
+  decay_electron_tag: { mu_plus: 0.96, mu_minus: 0.83, pi_plus: 0.45 }
+energy: ccqe
+binding_energy: 0.027
+samples: { include: samples/t2k_like.yaml }
+oscillation: { preset: asimov_A }
+
 run: { work_dir: ../work/legacy_hk_mock, seed: 1234, legacy_rng_order: true }

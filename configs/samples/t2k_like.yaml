@@ -1,0 +1,36 @@
+# T2K-like analysis samples for a water-Cherenkov far detector on the T2K beam:
+# single-ring mu-like and e-like selections, binned as the T2K far-detector fit
+# (energies GeV, angles degrees). The list order defines EventType; the
+# `column` names must match the response tables (configs/response/hk_2025.yaml).
+# Paths are relative to this file unless absolute; ${ZAKU_DATA} is set by setup.sh.
+samples:
+  - name: FHC_1Rmu
+    title: "FHC 1R#mu"
+    beam: FHC
+    column: 1Rmu
+    hypothesis: muon
+    binning: { file: "${ZAKU_DATA}/data/binning/binning_T2K_FHC_MuLike.txt" }
+  - name: FHC_1Re0de
+    title: "FHC 1Re 0de"
+    beam: FHC
+    column: 1Re0de
+    hypothesis: electron
+    binning: { file: "${ZAKU_DATA}/data/binning/binning_T2K_FHC_ELike.txt" }
+  - name: FHC_1Re1de
+    title: "FHC 1Re 1de"
+    beam: FHC
+    column: 1Re1de
+    hypothesis: electron
+    binning: { file: "${ZAKU_DATA}/data/binning/binning_T2K_FHC_EPiLike.txt" }
+  - name: RHC_1Rmu
+    title: "RHC 1R#mu"
+    beam: RHC
+    column: 1Rmu
+    hypothesis: muon
+    binning: { file: "${ZAKU_DATA}/data/binning/binning_T2K_RHC_MuLike.txt" }
+  - name: RHC_1Re0de
+    title: "RHC 1Re 0de"
+    beam: RHC
+    column: 1Re0de
+    hypothesis: electron
+    binning: { file: "${ZAKU_DATA}/data/binning/binning_T2K_RHC_ELike.txt" }

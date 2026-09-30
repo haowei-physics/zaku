@@ -74,6 +74,51 @@ strict: a weight row that does not match the current event, or a non-empty
 event without a row, aborts with the two file names. Sources with an explicit
 event number (GENIE) are matched on it directly.
 
+## The recon file
+
+`recon` (`Experiment::reconstruct`, `zaku <exp> recon [--production <name>]`)
+reads a production's flat tree and writes `<name>_fakerecon.root`: a
+`CloneTree(0)` copy of every input branch (events with an empty final state
+dropped) plus, per event:
+
+| Branches | Content |
+|---|---|
+| `RespCat/I RespTable/I SelEffWeight/D nSampleProb/I SampleProb[nSampleProb]/D` | response category, table, detection probability x, column probabilities y_c (column names in `zaku/response_columns`) |
+| `POTWeight/D OscWeight/D` | normalisation and oscillation weights |
+| `PLep_rec/F CosLep_rec/F Theta_rec/F true_ME/I recon_ME/I` | smeared lepton kinematics (degrees for the angle), decay-electron parents and tags |
+| `Enu_rec_ccqe_mu/F Q2_rec_ccqe_mu/F Enu_rec_ccqe_e/F Q2_rec_ccqe_e/F` | CCQE estimator under both lepton hypotheses |
+| `Ehad_rec/F Elep_rec_mu/F Elep_rec_e/F Enu_rec_calo_mu/F Enu_rec_calo_e/F` | calorimetric estimator |
+| `EventIndex/L ProductionIndex/I isRHC/O flux_pdg/I isAppearance/O` | provenance and production context |
+| `PLep_true/F Ehad_true/F Evis_true/F W2/F nFS_*/I` | derived truth |
+
+`FlatTree_FLUX` and `FlatTree_EVT` are copied through.
+
+## The FakeSelect file
+
+`select` (`Experiment::select`, `zaku <exp> select`) reads, per beam mode, the
+spline files if present else the recon files of the productions in list order,
+assigns samples and writes `fakeselect_<mode>.root` with the tree `FakeSelect`:
+
+- legacy scalars, in the legacy order: `isRHC/O EventType/I SampleIndex/I
+  flux_pdg/I RespCat/I PDGLep_rec/I recon_ME/I Enu_rec/F Q2_rec/F POTWeight/D
+  OscWeight/D SelEffWeight/D PLep_rec/F CosLep_rec/F Theta_rec/F Enu_true/F PDGnu/I cc/B`;
+- additions: `Mode/I EventIndex/L ProductionIndex/I isAppearance/O SampleProb/D
+  RespTable/I true_ME/I PLep_true/F Ehad_true/F Evis_true/F W2/F Ehad_rec/F Elep_rec/F
+  EhadFrac_rec/F Enu_rec_ccqe_mu/F Enu_rec_ccqe_e/F Enu_rec_calo_mu/F Enu_rec_calo_e/F`;
+- one unsplit `TGraph` branch per systematic dial, carried from the spline files.
+
+`EventType` is the sample's index in the experiment's sample list, `-2` for
+rejected entries. `SampleIndex` (legacy name) equals `ProductionIndex`, the
+production's index within its beam mode. `Enu_rec`, `Q2_rec` and `PDGLep_rec`
+are evaluated under the assigned sample's lepton hypothesis with the
+experiment's energy estimator. In `split` mode an event contributes one entry
+per column with probability > 0 (`SampleProb` = that probability) plus a
+rejected entry with the remainder; in `draw` mode one entry with `SampleProb = 1`.
+The GUNDAM nominal weight is `POTWeight × SelEffWeight × SampleProb × (cc != 0 || !isAppearance)`.
+
+The file also holds the `rates` TH2 (production × sample, expected events) and
+the same table is written as `fakeselect_<mode>_rates.csv`.
+
 ## Normalisation
 
 ```

@@ -86,7 +86,7 @@ int main() {
   ZAKU_CHECK_NOTHROW(exp.validate());
 
   // --- YAML round trip ------------------------------------------------------
-  exp.setRawSection("response", "tables: []\n");
+  exp.setRawSection("gundam", "tables: []\n");
   const std::string yaml = exp.toYaml();
   ZAKU_CHECK(yaml.find("beam_modes") != std::string::npos);
   Experiment back = Experiment::fromYamlString(yaml);
@@ -103,7 +103,7 @@ int main() {
   ZAKU_CHECK_EQ(static_cast<int>(back.production("numu_x_nue_50K_FHC").seed), 77);
   ZAKU_CHECK_EQ(static_cast<int>(back.run().seed), 20250929);
   ZAKU_CHECK_STR_EQ(back.workDir(), scratch + "/work");
-  ZAKU_CHECK(back.rawSection("response").find("tables") != std::string::npos);
+  ZAKU_CHECK(back.rawSection("gundam").find("tables") != std::string::npos);
   ZAKU_CHECK_STR_EQ(back.toYaml(), yaml);  // idempotent
 
   // --- YAML from a file with relative paths and an environment variable -----
@@ -123,7 +123,7 @@ int main() {
          "  - {beam: FHC, flux: numu, interaction: numu, n: 2000}\n"
          "  - {beam: RHC, flux: numubar, n: 2000}\n"
          "run: {work_dir: work_rel, seed: 5}\n"
-         "samples: [{name: a}]\n";
+         "gundam: {output_dir: g}\n";
   }
   Experiment fromFile = Experiment::fromConfig(cfg);
   ZAKU_CHECK_STR_EQ(fromFile.configPath(), cfg);
@@ -133,7 +133,7 @@ int main() {
   ZAKU_CHECK_EQ(fromFile.production("numubar_x_numubar_2K_RHC").interactionPdg, -14);
   ZAKU_CHECK_CLOSE(fromFile.nNucleons(), 1.132e35, 1e-12);
   ZAKU_CHECK_STR_EQ(fromFile.workDir(), scratch + "/work_rel");
-  ZAKU_CHECK(!fromFile.rawSection("samples").empty());
+  ZAKU_CHECK(!fromFile.rawSection("gundam").empty());
   ZAKU_CHECK(fromFile.status().find("numu_x_numu_2K_FHC") != std::string::npos);
   ZAKU_CHECK(fromFile.describe().find("FromFile") != std::string::npos);
 

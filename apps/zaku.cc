@@ -1,6 +1,6 @@
 // zaku - command-line front end to the Zaku library.
 //
-// Usage: zaku <experiment.yaml> <stage> [--sample <name>] [--force]
+// Usage: zaku <experiment.yaml> <stage> [--production <name>] [--force]
 //        zaku --version | --help
 //
 // Stages are added as the library grows; --help lists the ones this build has.
@@ -29,29 +29,31 @@ const StageInfo kStages[] = {
     {"prepare-generation", "write generator cards/seed files + generate manifest", false},
     {"prepare-weights", "write dial configs + weight manifest", false},
     {"prepare-flatten", "write the flatten manifest", false},
-    {"recon", "apply the response, smearing and energy estimators", false},
+    {"recon", "apply the response, smearing and energy estimators", true},
     {"splines", "build per-event systematic splines", false},
-    {"select", "assign samples, write the FakeSelect tree and rate table", false},
+    {"select", "assign samples, write the FakeSelect tree and rate table", true},
     {"covariances", "write the parameter-set files", false},
     {"summary", "summarise the systematics", false},
     {"gundam-config", "write the GUNDAM configuration tree + fit manifest", false},
     {"list-dials", "print the dial catalogue", false},
     {"list-models", "print the NEUT model choices", false},
     {"list-tunes", "print the GENIE tune catalogue", false},
-    {"show-response", "print the response tables", false},
+    {"show-response", "print the response tables (or write them as YAML with --yaml)", true},
+    {"show-samples", "print the analysis samples", true},
 };
 
 struct Options {
   std::string config;
   std::string stage;
-  std::string sample;
+  std::string production;
   bool force = false;
+  bool yaml = false;
 };
 
 void printUsage() {
   std::printf("zaku %s\n\n", zaku::buildInfo().c_str());
   std::printf("Usage:\n");
-  std::printf("  zaku <experiment.yaml> <stage> [--sample <name>] [--force]\n");
+  std::printf("  zaku <experiment.yaml> <stage> [--production <name>] [--force] [--yaml]\n");
   std::printf("  zaku --version | --help\n\n");
   std::printf("Stages:\n");
   for (const auto& s : kStages) {
@@ -79,7 +81,7 @@ int run(const Options& opt) {
   }
   if (stage == "list-productions") {
     for (const auto& s : exp.productions()) {
-      if (!opt.sample.empty() && opt.sample != s.name()) continue;
+      if (!opt.production.empty() && opt.production != s.name()) continue;
       std::printf("%s\n", s.name().c_str());
     }
     return 0;
@@ -92,6 +94,24 @@ int run(const Options& opt) {
                     exp.fluxIntegralPerPOT(mode, pdg));
       }
     }
+    return 0;
+  }
+  if (stage == "show-response") {
+    if (opt.yaml) std::printf("%s", exp.response().toYaml().c_str());
+    else std::printf("%s", exp.response().describe().c_str());
+    return 0;
+  }
+  if (stage == "show-samples") {
+    const auto& samples = exp.samples();
+    for (std::size_t i = 0; i < samples.size(); ++i) std::printf("[%zu] %s\n", i, samples[i].describe().c_str());
+    return 0;
+  }
+  if (stage == "recon") {
+    exp.reconstruct(opt.production, opt.force);
+    return 0;
+  }
+  if (stage == "select") {
+    exp.select(opt.force);
     return 0;
   }
   for (const auto& s : kStages) {
@@ -129,8 +149,10 @@ int main(int argc, char** argv) {
   for (std::size_t i = 2; i < args.size(); ++i) {
     if (args[i] == "--force") {
       opt.force = true;
-    } else if (args[i] == "--sample" && i + 1 < args.size()) {
-      opt.sample = args[++i];
+    } else if (args[i] == "--yaml") {
+      opt.yaml = true;
+    } else if (args[i] == "--production" && i + 1 < args.size()) {
+      opt.production = args[++i];
     } else {
       std::fprintf(stderr, "zaku: unknown option '%s'\n", args[i].c_str());
       return 1;

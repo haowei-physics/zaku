@@ -1,0 +1,30 @@
+# NOvA-like analysis samples: one numu-CC and one nue-CC sample per beam mode,
+# binned in the calorimetric reconstructed energy (Enu_rec = Elep_rec + Ehad_rec,
+# GeV). Use with `energy: calorimetric` and a response whose columns are
+# numuCC / nueCC (configs/response/example_calorimeter.yaml). The list order
+# defines EventType.
+samples:
+  - name: FHC_numuCC
+    title: "FHC #nu_{#mu} CC"
+    beam: FHC
+    column: numuCC
+    hypothesis: muon
+    binning: { variables: [Enu_rec], edges: { Enu_rec: { min: 0.0, max: 5.0, step: 0.1 } } }
+  - name: FHC_nueCC
+    title: "FHC #nu_{e} CC"
+    beam: FHC
+    column: nueCC
+    hypothesis: electron
+    binning: { variables: [Enu_rec], edges: { Enu_rec: { min: 0.0, max: 5.0, step: 0.25 } } }
+  - name: RHC_numuCC
+    title: "RHC #bar{#nu}_{#mu} CC"
+    beam: RHC
+    column: numuCC
+    hypothesis: muon
+    binning: { variables: [Enu_rec], edges: { Enu_rec: { min: 0.0, max: 5.0, step: 0.1 } } }
+  - name: RHC_nueCC
+    title: "RHC #bar{#nu}_{e} CC"
+    beam: RHC
+    column: nueCC
+    hypothesis: electron
+    binning: { variables: [Enu_rec], edges: { Enu_rec: { min: 0.0, max: 5.0, step: 0.25 } } }

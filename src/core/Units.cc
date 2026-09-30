@@ -70,6 +70,12 @@ TH1* histogramToGeV(const TH1& h, EnergyUnit from, bool contentIsDensity, int ax
   const std::vector<double> ey = dim >= 2 ? edges(*h.GetYaxis(), cy ? scale : 1.0) : std::vector<double>{};
   const std::vector<double> ez = dim >= 3 ? edges(*h.GetZaxis(), cz ? scale : 1.0) : std::vector<double>{};
 
+  // Never register the copy with the current directory (a source file may be open).
+  struct DirectoryGuard {
+    bool prev = TH1::AddDirectoryStatus();
+    DirectoryGuard() { TH1::AddDirectory(false); }
+    ~DirectoryGuard() { TH1::AddDirectory(prev); }
+  } guard;
   TH1* out = nullptr;
   if (dim == 1) {
     out = new TH1D(name.c_str(), h.GetTitle(), h.GetNbinsX(), ex.data());

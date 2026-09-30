@@ -10,6 +10,11 @@
 #include "zaku/core/Production.h"
 #include "zaku/core/RunSettings.h"
 #include "zaku/core/Types.h"
+#include "zaku/detector/Reco.h"
+#include "zaku/detector/Response.h"
+#include "zaku/detector/Sample.h"
+#include "zaku/detector/Smearing.h"
+#include "zaku/osc/Oscillator.h"
 
 namespace zaku {
 
@@ -93,6 +98,47 @@ public:
   std::vector<Production> productions(BeamMode mode) const;
   /// The seed a production uses: its own, or one derived from the run seed and its name.
   unsigned productionSeed(const Production& s) const;
+
+  // --- detector response and reconstruction ------------------------------
+  /// The response tables: true event -> detection probability and column probabilities.
+  Experiment& setResponse(const Response& r);
+  const Response& response() const;
+  bool hasResponse() const;
+  Experiment& setSmearing(const Smearing& s);
+  const Smearing& smearing() const;
+  /// Which estimator fills Enu_rec (CCQE = T2K-like, Calorimetric = NOvA-like).
+  Experiment& setEnergyEstimator(EnergyEstimator e);
+  EnergyEstimator energyEstimator() const;
+  /// How events are distributed over samples (split weights or one random draw).
+  Experiment& setAssignment(Assignment a);
+  Assignment assignment() const;
+  /// Binding energy used by the CCQE estimator (GeV; T2K oxygen value 0.027).
+  Experiment& setBindingEnergy(double GeV);
+  double bindingEnergy() const;
+
+  // --- analysis samples ------------------------------------------------
+  /// Append a sample; its index in the list is EventType.
+  Experiment& addSample(const SampleDefinition& s);
+  Experiment& clearSamples();
+  const std::vector<SampleDefinition>& samples() const;
+  int sampleIndex(const std::string& name) const;
+  /// Indices of the samples of one beam mode, in list order.
+  std::vector<int> sampleIndices(BeamMode mode) const;
+
+  // --- oscillation ------------------------------------------------------
+  Experiment& setOscillation(const OscillationParameters& p);
+  const OscillationParameters& oscillation() const;
+  /// NuFast for this experiment's baseline and matter.
+  Oscillator oscillator() const;
+
+  // --- processing stages ------------------------------------------------
+  /// Apply the response, smearing and energy estimators to one production
+  /// (or, with an empty name, to all). Reads the flat tree, writes the recon file.
+  void reconstruct(const std::string& production = "", bool force = false);
+  /// Assign samples and write the FakeSelect tree and rate table of one beam
+  /// mode (or all). Reads the spline files when present, else the recon files.
+  void select(BeamMode mode, bool force = false);
+  void select(bool force = false);
 
   // --- run -------------------------------------------------------------
   Experiment& setRun(const std::string& workDir, unsigned seed = 20250929);

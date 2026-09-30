@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Zaku VERSION 0.1.1 LANGUAGES CXX
+project(Zaku VERSION 0.2.0 LANGUAGES CXX
         DESCRIPTION "Zaku Assembles Kinematics and Systematics")
 
 # ---------------------------------------------------------------------------
@@ -61,6 +61,19 @@ set(ZAKU_SOURCES
   src/event/FlatTreeCursor.cc
   src/event/WeightCursor.cc
   src/event/EventJoin.cc
+  src/osc/Oscillator.cc
+  src/detector/Formula.cc
+  src/detector/Variables.cc
+  src/detector/Response.cc
+  src/detector/ResponseYaml.cc
+  src/detector/Smearing.cc
+  src/detector/Reco.cc
+  src/detector/Binning.cc
+  src/detector/Sample.cc
+  src/stages/RateTable.cc
+  src/stages/Reconstruct.cc
+  src/stages/Select.cc
+  third_party/NuFast/NuFast_LBL.cc
 )
 
 # Headers that go into the ROOT dictionary. They are named relative to
@@ -84,6 +97,15 @@ set(ZAKU_DICT_HEADERS
   zaku/event/FlatTreeCursor.h
   zaku/event/WeightCursor.h
   zaku/event/EventJoin.h
+  zaku/osc/Oscillator.h
+  zaku/detector/Formula.h
+  zaku/detector/Variables.h
+  zaku/detector/Response.h
+  zaku/detector/Smearing.h
+  zaku/detector/Reco.h
+  zaku/detector/Binning.h
+  zaku/detector/Sample.h
+  zaku/stages/Stages.h
   zaku/Zaku.h
 )
 
@@ -94,6 +116,8 @@ target_include_directories(Zaku
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:include>
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/NuFast
 )
 target_link_libraries(Zaku
   PUBLIC  ROOT::Core ROOT::RIO ROOT::Tree ROOT::TreePlayer ROOT::Hist

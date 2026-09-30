@@ -1,0 +1,48 @@
+# Hyper-K-like exposure on the T2K beam with a NOvA-like (tracking calorimeter)
+# reconstruction: calorimetric energy estimator and an illustrative response.
+# Same beam, detector mass and productions as hk_t2k_like.yaml.
+name: HK_nova_like
+baseline_km: 295.0
+matter: { density_g_cm3: 2.6, electron_fraction: 0.5 }
+detector: { material: water, fiducial_mass_kt: 188 }
+
+flux_units: { pot_norm: 1.0e21, bin_norm_GeV: 0.05 }
+beam_modes:
+  FHC:
+    pot: 6.75e21
+    flux: { file: "${ZAKU_DATA}/data/flux/t2kflux_2020_plus250kA_nominal.root", t2k_detector: sk }
+  RHC:
+    pot: 2.025e22
+    flux: { file: "${ZAKU_DATA}/data/flux/t2kflux_2020_minus250kA_nominal.root", t2k_detector: sk }
+flux_covariance:
+  file: "${ZAKU_DATA}/data/flux/t2kflux_2020_covariance.root"
+  nd_constraint: 0.8
+
+productions:
+  - { beam: FHC, flux: numu,    interaction: numu,    n: 200000 }
+  - { beam: FHC, flux: numubar, interaction: numubar, n: 50000 }
+  - { beam: FHC, flux: nue,     interaction: nue,     n: 200000 }
+  - { beam: FHC, flux: nuebar,  interaction: nuebar,  n: 50000 }
+  - { beam: FHC, flux: numu,    interaction: nue,     n: 50000 }
+  - { beam: FHC, flux: numubar, interaction: nuebar,  n: 50000 }
+  - { beam: RHC, flux: numu,    interaction: numu,    n: 50000 }
+  - { beam: RHC, flux: numubar, interaction: numubar, n: 200000 }
+  - { beam: RHC, flux: nue,     interaction: nue,     n: 50000 }
+  - { beam: RHC, flux: nuebar,  interaction: nuebar,  n: 200000 }
+  - { beam: RHC, flux: numu,    interaction: nue,     n: 50000 }
+  - { beam: RHC, flux: numubar, interaction: nuebar,  n: 50000 }
+
+# --- fake detector -------------------------------------------------------------
+response: { include: response/example_calorimeter.yaml, assignment: split }
+smearing:
+  lepton_momentum: { type: fractional, sigma: 0.035 }
+  lepton_angle:    { type: gaussian_deg, sigma: 2.0 }
+  hadronic_energy: { type: stochastic, a: 0.20, b: 0.15 }
+  electron_energy: { type: stochastic, a: 0.08, b: 0.03 }
+  muon_energy:     { type: fractional, sigma: 0.035 }
+  neutron_visible_fraction: 0.0
+energy: calorimetric       # Enu_rec = Elep_rec + Ehad_rec
+samples: { include: samples/nova_like.yaml }
+oscillation: { preset: asimov_A }
+
+run: { work_dir: ../work/hk_nova_like, seed: 20250929 }

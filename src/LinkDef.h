@@ -72,4 +72,38 @@
 #pragma link C++ struct zaku::JoinStats+;
 #pragma link C++ class zaku::EventJoin-;
 
+// osc/
+#pragma link C++ struct zaku::OscillationParameters+;
+#pragma link C++ class zaku::Oscillator-;
+
+// detector/
+#pragma link C++ namespace zaku::reco;
+#pragma link C++ class zaku::Formula-;
+#pragma link C++ class zaku::VariableSet-;
+#pragma link C++ struct zaku::ResponseCategory+;
+#pragma link C++ class std::vector<zaku::ResponseCategory>+;
+#pragma link C++ struct zaku::TableAxis+;
+#pragma link C++ class std::vector<zaku::TableAxis>+;
+#pragma link C++ class zaku::TableSource-;
+#pragma link C++ struct zaku::ResponseTable-;
+#pragma link C++ struct zaku::ResponseResult+;
+#pragma link C++ class zaku::Response-;
+#pragma link C++ class zaku::ResolutionModel-;
+#pragma link C++ struct zaku::DecayElectronTagging+;
+#pragma link C++ class zaku::Smearing-;
+#pragma link C++ struct zaku::RecoObservables+;
+#pragma link C++ struct zaku::BinningAxis+;
+#pragma link C++ class std::vector<zaku::BinningAxis>+;
+#pragma link C++ struct zaku::Bin+;
+#pragma link C++ class std::vector<zaku::Bin>+;
+#pragma link C++ class zaku::Binning+;
+#pragma link C++ struct zaku::SampleDefinition+;
+#pragma link C++ class std::vector<zaku::SampleDefinition>+;
+
+// stages/
+#pragma link C++ namespace zaku::stages;
+#pragma link C++ class zaku::RateTable+;
+#pragma link C++ struct zaku::stages::ReconSummary+;
+#pragma link C++ struct zaku::stages::SelectSummary+;
+
 #endif

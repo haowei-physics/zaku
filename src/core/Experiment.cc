@@ -1,5 +1,6 @@
 #include "zaku/core/Experiment.h"
 
+#include <TError.h>
 #include <TSystem.h>
 
 #include <functional>
@@ -9,6 +10,7 @@
 
 #include "ExperimentImpl.h"
 #include "zaku/core/Units.h"
+#include "zaku/stages/Stages.h"
 
 namespace zaku {
 
@@ -195,6 +197,105 @@ unsigned Experiment::productionSeed(const Production& s) const {
   return seed;
 }
 
+// --- detector response and reconstruction -----------------------------------
+
+Experiment& Experiment::setResponse(const Response& r) {
+  impl_->response = r;
+  impl_->hasResponse = true;
+  impl_->responseInclude.clear();
+  return *this;
+}
+const Response& Experiment::response() const {
+  if (!impl_->hasResponse) throw std::runtime_error("Experiment '" + impl_->name + "': no response tables set");
+  return impl_->response;
+}
+bool Experiment::hasResponse() const { return impl_->hasResponse; }
+Experiment& Experiment::setSmearing(const Smearing& s) {
+  impl_->smearing = s;
+  impl_->smearingInclude.clear();
+  return *this;
+}
+const Smearing& Experiment::smearing() const { return impl_->smearing; }
+Experiment& Experiment::setEnergyEstimator(EnergyEstimator e) {
+  impl_->estimator = e;
+  return *this;
+}
+EnergyEstimator Experiment::energyEstimator() const { return impl_->estimator; }
+Experiment& Experiment::setAssignment(Assignment a) {
+  impl_->assignment = a;
+  return *this;
+}
+Assignment Experiment::assignment() const { return impl_->assignment; }
+Experiment& Experiment::setBindingEnergy(double GeV) {
+  if (GeV < 0.0) throw std::invalid_argument("Experiment::setBindingEnergy: must be >= 0 GeV");
+  impl_->bindingEnergy = GeV;
+  return *this;
+}
+double Experiment::bindingEnergy() const { return impl_->bindingEnergy; }
+
+// --- analysis samples -------------------------------------------------------
+
+Experiment& Experiment::addSample(const SampleDefinition& s) {
+  if (s.name.empty()) throw std::invalid_argument("Experiment::addSample: the sample has no name");
+  if (sampleIndex(s.name) >= 0) throw std::invalid_argument("Experiment::addSample: a sample named '" + s.name + "' already exists");
+  impl_->samples.push_back(s);
+  impl_->samplesInclude.clear();
+  return *this;
+}
+Experiment& Experiment::clearSamples() {
+  impl_->samples.clear();
+  return *this;
+}
+const std::vector<SampleDefinition>& Experiment::samples() const { return impl_->samples; }
+int Experiment::sampleIndex(const std::string& name) const {
+  for (std::size_t i = 0; i < impl_->samples.size(); ++i) {
+    if (impl_->samples[i].name == name) return static_cast<int>(i);
+  }
+  return -1;
+}
+std::vector<int> Experiment::sampleIndices(BeamMode mode) const {
+  std::vector<int> out;
+  for (std::size_t i = 0; i < impl_->samples.size(); ++i) {
+    if (impl_->samples[i].appliesTo(mode)) out.push_back(static_cast<int>(i));
+  }
+  return out;
+}
+
+// --- oscillation ------------------------------------------------------------
+
+Experiment& Experiment::setOscillation(const OscillationParameters& p) {
+  impl_->oscillation = p;
+  return *this;
+}
+const OscillationParameters& Experiment::oscillation() const { return impl_->oscillation; }
+Oscillator Experiment::oscillator() const {
+  if (impl_->baseline_km <= 0.0) throw std::runtime_error("Experiment '" + impl_->name + "': baseline_km is not set");
+  return Oscillator(impl_->oscillation, impl_->baseline_km, rhoYe(), 0);
+}
+
+// --- processing stages ------------------------------------------------------
+
+void Experiment::reconstruct(const std::string& productionName, bool force) {
+  if (!productionName.empty()) {
+    const stages::ReconSummary s = stages::reconstruct(*this, production(productionName), force);
+    Info("zaku::Experiment::reconstruct", "%s", s.describe().c_str());
+    return;
+  }
+  for (const auto& p : impl_->productions) {
+    const stages::ReconSummary s = stages::reconstruct(*this, p, force);
+    Info("zaku::Experiment::reconstruct", "%s", s.describe().c_str());
+  }
+}
+
+void Experiment::select(BeamMode mode, bool force) {
+  const stages::SelectSummary s = stages::select(*this, mode, force);
+  Info("zaku::Experiment::select", "%s", s.describe().c_str());
+}
+
+void Experiment::select(bool force) {
+  for (BeamMode mode : beamModes()) select(mode, force);
+}
+
 // --- run ------------------------------------------------------------------
 
 Experiment& Experiment::setRun(const std::string& workDir, unsigned seed) {
@@ -234,6 +335,19 @@ std::string Experiment::describe() const {
   }
   os << "  " << impl_->productions.size() << " production(s):\n";
   for (const auto& s : impl_->productions) os << "    " << s.describe() << " [seed " << productionSeed(s) << "]\n";
+  if (impl_->hasResponse) {
+    os << "  response: " << impl_->response.categories().size() << " categories, " << impl_->response.tables().size()
+       << " tables, columns";
+    for (const auto& c : impl_->response.columns()) os << " " << c;
+    os << ", assignment " << toString(impl_->assignment) << "\n";
+  } else {
+    os << "  no response tables\n";
+  }
+  os << "  " << impl_->smearing.describe() << "\n";
+  os << "  energy estimator: " << toString(impl_->estimator) << ", binding energy " << impl_->bindingEnergy << " GeV\n";
+  os << "  " << impl_->samples.size() << " sample(s):\n";
+  for (std::size_t i = 0; i < impl_->samples.size(); ++i) os << "    [" << i << "] " << impl_->samples[i].describe() << "\n";
+  os << "  oscillation: " << impl_->oscillation.describe() << "\n";
   os << "  run: work dir '" << impl_->run.workDir << "', seed " << impl_->run.seed
      << (impl_->run.legacyRngOrder ? ", legacy RNG order" : "") << "\n";
   for (const auto& kv : impl_->raw) os << "  section '" << kv.first << "' kept for a later stage\n";

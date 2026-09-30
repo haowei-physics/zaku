@@ -14,9 +14,10 @@ Conventions:
 - Energies are GeV everywhere ([units](units.md)). A histogram file in MeV must
   say `units: MeV` next to the file name.
 - Unknown keys are errors, so typos do not pass silently.
-- Sections this build does not interpret yet (`samples`, `response`, `smearing`,
-  `energy`, `generator`, `shifts`, `oscillation`, `systematics`, `gundam`) are
-  kept verbatim and written back by `toYaml()`.
+- Sections this build does not interpret yet (`generator`, `shifts`,
+  `systematics`, `gundam`) are kept verbatim and written back by `toYaml()`.
+- A block can be `{ include: other.yaml }` (paths relative to the including
+  file) where noted; the included file holds the block's content.
 
 ## Keys
 
@@ -31,6 +32,12 @@ Conventions:
 | `beam_modes.<FHC\|RHC>.flux` | `setFlux` | See below. |
 | `flux_covariance` | `setFluxCovariance` | See below. |
 | `productions` | `addProduction` | List of generator productions, see below. The list order defines `SampleIndex`. |
+| `response` | `setResponse`, `setAssignment` | The response tables ([response.md](response.md)), inline, `{include: file}` or `{legacy_file: response.root}`; plus `assignment: split \| draw`. |
+| `smearing` | `setSmearing` | Reconstruction resolutions and decay-electron tagging, see below. |
+| `energy` | `setEnergyEstimator` | `ccqe` (T2K-like) or `calorimetric` (NOvA-like): which estimator fills `Enu_rec`. |
+| `binding_energy` | `setBindingEnergy` | Binding energy of the CCQE formula, GeV (default 0.027). |
+| `samples` | `addSample` | The analysis samples, see below; list order defines `EventType`. Inline list or `{include: file}`. |
+| `oscillation` | `setOscillation` | `{preset: asimov_A}` and/or `s12sq s13sq s23sq delta_cp dmsq21 dmsq32 ordering: normal\|inverted`. |
 | `run.work_dir` | `setRun` | Directory under which every stage reads and writes. |
 | `run.seed` | `setRun` | Master random seed; per-production seeds are derived from it and the production name unless a production sets its own. |
 | `run.legacy_rng_order` | `setLegacyRngOrder` | Reproduce the legacy macros' random-number sequence exactly (regression use). |
@@ -95,6 +102,44 @@ the reconstructed and selected categories defined under `samples`).
 `<flux>_x_<interaction>_<N>_<beam>` with `N` as `200K` for multiples of 1000
 (`numu_x_nue_50K_FHC`); its files live in `<work_dir>/<flux>/` (see
 [pipeline.md](pipeline.md)).
+
+### `smearing`
+
+```yaml
+smearing:
+  file: "${ZAKU_DATA}/data/hk/smearing.root"     # optional: the legacy h_dp_vs_p / h_dcos_vs_cos histograms
+  lepton_momentum: { type: legacy_fractional, sigma: 0.024 }   # fractional | absolute | legacy_fractional | stochastic {a, b} | {hist: file:name} | {formula: ...} | none
+  lepton_angle:    { type: gaussian_deg, sigma: 1.8 }          # sigma of cos(theta) = sin(theta) x sigma_theta (binned as the legacy file)
+  hadronic_energy: { type: stochastic, a: 0.20, b: 0.15 }      # sigma/E = a/sqrt(E) (+) b
+  electron_energy: { type: stochastic, a: 0.08, b: 0.03 }
+  muon_energy:     { type: fractional, sigma: 0.035 }
+  neutron_visible_fraction: 0.0
+  decay_electron_tag: { mu_plus: 0.96, mu_minus: 0.83, pi_plus: 0.45 }
+```
+
+See [physics.md](physics.md) for the formulas.
+
+### `samples`
+
+```yaml
+samples:
+  - name: FHC_1Rmu               # identifier; index in the list = EventType
+    title: "FHC 1R#mu"           # display title (ROOT latex)
+    beam: FHC                    # FHC | RHC | any
+    column: 1Rmu                 # response-table column feeding it (default: name)
+    hypothesis: muon             # muon | electron | true: lepton assumed by the energy estimator
+    binning: { file: "${ZAKU_DATA}/data/binning/binning_T2K_FHC_MuLike.txt" }   # GUNDAM txt binning
+    cut: "Enu_rec < 30"          # optional reco-level cut (TFormula), also written into the GUNDAM config
+  - name: FHC_numuCC
+    beam: FHC
+    column: numuCC
+    binning:                     # or an inline Cartesian product (last axis fastest)
+      variables: [Enu_rec, Theta_rec]
+      edges: { Enu_rec: { min: 0, max: 3, step: 0.05, extra: [3.5, 4, 5, 10, 30] }, Theta_rec: [0, 20, 40, 60, 80, 100, 180] }
+```
+
+`configs/samples/t2k_like.yaml` and `configs/samples/nova_like.yaml` are shipped
+sample sets to include.
 
 ## Example
 

@@ -24,5 +24,14 @@
 #include "zaku/event/FlatTreeCursor.h"
 #include "zaku/event/WeightCursor.h"
 #include "zaku/event/EventJoin.h"
+#include "zaku/osc/Oscillator.h"
+#include "zaku/detector/Formula.h"
+#include "zaku/detector/Variables.h"
+#include "zaku/detector/Response.h"
+#include "zaku/detector/Smearing.h"
+#include "zaku/detector/Reco.h"
+#include "zaku/detector/Binning.h"
+#include "zaku/detector/Sample.h"
+#include "zaku/stages/Stages.h"
 
 #endif  // ZAKU_ZAKU_H

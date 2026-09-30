@@ -87,6 +87,32 @@ EventJoin = _ns.EventJoin
 JoinOptions = _ns.JoinOptions
 JoinStats = _ns.JoinStats
 
+# Stage 2: oscillation, detector response, reconstruction, samples, stages
+OscillationParameters = _ns.OscillationParameters
+Oscillator = _ns.Oscillator
+Formula = _ns.Formula
+VariableSet = _ns.VariableSet
+ResponseCategory = _ns.ResponseCategory
+TableAxis = _ns.TableAxis
+TableSource = _ns.TableSource
+ResponseTable = _ns.ResponseTable
+ResponseResult = _ns.ResponseResult
+Response = _ns.Response
+ResolutionModel = _ns.ResolutionModel
+DecayElectronTagging = _ns.DecayElectronTagging
+Smearing = _ns.Smearing
+Hypothesis = _ns.Hypothesis
+EnergyEstimator = _ns.EnergyEstimator
+RecoObservables = _ns.RecoObservables
+reco = _ns.reco
+BinningAxis = _ns.BinningAxis
+Bin = _ns.Bin
+Binning = _ns.Binning
+SampleDefinition = _ns.SampleDefinition
+Assignment = _ns.Assignment
+RateTable = _ns.RateTable
+stages = _ns.stages
+
 DATA_DIR = _os.environ.get("ZAKU_DATA", "")
 
 
@@ -129,5 +155,9 @@ __all__ = [
     "Provenance", "RunSettings", "FluxHistograms", "FluxPreparer", "FluxCovarianceInput",
     "FlatEvent", "ProductionContext", "TruthVariables", "FlatTreeCursor", "DialKnots", "T2KRWWeightCursor",
     "EventJoin", "JoinOptions", "JoinStats",
+    "OscillationParameters", "Oscillator", "Formula", "VariableSet", "ResponseCategory", "TableAxis", "TableSource",
+    "ResponseTable", "ResponseResult", "Response", "ResolutionModel", "DecayElectronTagging", "Smearing",
+    "Hypothesis", "EnergyEstimator", "RecoObservables", "reco", "BinningAxis", "Bin", "Binning",
+    "SampleDefinition", "Assignment", "RateTable", "stages",
     "DATA_DIR", "strings", "to_numpy",
 ]

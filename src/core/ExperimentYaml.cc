@@ -15,15 +15,14 @@
 namespace zaku {
 
 const std::vector<std::string>& experimentKnownKeys() {
-  static const std::vector<std::string> k = {"name",        "baseline_km",     "matter",     "detector",
-                                             "flux_units",  "beam_modes",      "flux_covariance", "productions",
-                                             "run"};
+  static const std::vector<std::string> k = {"name",     "baseline_km",  "matter",   "detector",       "flux_units",
+                                             "beam_modes", "flux_covariance", "productions", "response", "smearing",
+                                             "energy",   "binding_energy", "samples", "oscillation",  "run"};
   return k;
 }
 
 const std::vector<std::string>& experimentRawKeys() {
-  static const std::vector<std::string> k = {"samples",  "response",    "smearing",    "energy", "generator",
-                                             "shifts",   "oscillation", "systematics", "gundam"};
+  static const std::vector<std::string> k = {"generator", "shifts", "systematics", "gundam"};
   return k;
 }
 
@@ -139,6 +138,135 @@ Detector parseDetector(const YAML::Node& n) {
   return det;
 }
 
+/// A block that is either inline or `{include: file}`. Returns the YAML text
+/// of the block and the directory relative paths inside it resolve against.
+struct Block {
+  std::string text;
+  std::string baseDir;
+  std::string includePath;  ///< empty when inline
+  YAML::Node node;
+};
+
+Block loadBlock(const YAML::Node& n, const std::string& baseDir, const std::string& where) {
+  Block b;
+  if (n.IsMap() && n["include"]) {
+    b.includePath = resolvePath(n["include"].as<std::string>(), baseDir);
+    std::ifstream in(b.includePath);
+    if (!in) throw std::runtime_error("config: '" + where + "' includes '" + b.includePath + "' which cannot be read");
+    std::stringstream ss;
+    ss << in.rdbuf();
+    b.text = ss.str();
+    std::string dir = gSystem->GetDirName(b.includePath.c_str()).Data();
+    if (dir.empty() || dir == ".") dir = gSystem->WorkingDirectory();
+    if (dir[0] != '/') dir = std::string(gSystem->WorkingDirectory()) + "/" + dir;
+    b.baseDir = dir;
+    try {
+      b.node = YAML::Load(b.text);
+    } catch (const YAML::Exception& e) {
+      throw std::runtime_error("config: '" + b.includePath + "': " + e.what());
+    }
+  } else {
+    b.node = n;
+    b.text = YAML::Dump(n);
+    b.baseDir = baseDir;
+  }
+  return b;
+}
+
+BinningAxis parseAxis(const std::string& variable, const YAML::Node& n, const std::string& where) {
+  BinningAxis a;
+  a.variable = variable;
+  if (n.IsSequence()) {
+    for (const auto& e : n) a.edges.push_back(e.as<double>());
+    if (a.edges.size() < 2) throw std::runtime_error("config: '" + where + "': axis '" + variable + "' needs at least two edges");
+    return a;
+  }
+  if (n.IsMap()) {
+    rejectUnknown(n, {"min", "max", "step", "extra"}, where + "." + variable);
+    std::vector<double> extra;
+    if (n["extra"]) {
+      for (const auto& e : n["extra"]) extra.push_back(e.as<double>());
+    }
+    return BinningAxis::uniform(variable, require<double>(n, "min", where), require<double>(n, "max", where),
+                                require<double>(n, "step", where), extra);
+  }
+  throw std::runtime_error("config: '" + where + "': axis '" + variable + "' must be a list of edges or {min, max, step}");
+}
+
+SampleDefinition parseSample(const YAML::Node& n, const std::string& baseDir, const std::string& where) {
+  rejectUnknown(n, {"name", "title", "beam", "column", "hypothesis", "binning", "cut"}, where);
+  SampleDefinition s;
+  s.name = require<std::string>(n, "name", where);
+  s.title = get<std::string>(n, "title", s.name);
+  if (n["beam"]) {
+    const std::string b = n["beam"].as<std::string>();
+    if (b != "any" && b != "all") s.beamMode = static_cast<int>(beamModeFromString(b));
+  }
+  s.column = get<std::string>(n, "column", "");
+  if (n["hypothesis"]) s.hypothesis = hypothesisFromString(n["hypothesis"].as<std::string>());
+  s.cut = get<std::string>(n, "cut", "");
+  const YAML::Node bn = n["binning"];
+  if (!bn) throw std::runtime_error("config: sample '" + s.name + "' needs a 'binning'");
+  rejectUnknown(bn, {"file", "variables", "edges", "values"}, where + ".binning");
+  if (bn["file"]) {
+    s.binningFile = resolvePath(bn["file"].as<std::string>(), baseDir);
+    s.binning = Binning::fromFile(s.binningFile);
+  } else {
+    if (!bn["variables"]) throw std::runtime_error("config: sample '" + s.name + "' binning needs 'file' or 'variables'");
+    std::vector<BinningAxis> axes;
+    for (const auto& v : bn["variables"]) {
+      const std::string var = v.as<std::string>();
+      if (bn["edges"] && bn["edges"][var]) {
+        axes.push_back(parseAxis(var, bn["edges"][var], where + ".binning.edges"));
+      } else if (bn["values"] && bn["values"][var]) {
+        BinningAxis a;
+        a.variable = var;
+        for (const auto& e : bn["values"][var]) a.values.push_back(e.as<double>());
+        axes.push_back(a);
+      } else {
+        throw std::runtime_error("config: sample '" + s.name + "': no edges or values for binning variable '" + var + "'");
+      }
+    }
+    s.binning = Binning::product(axes);
+  }
+  return s;
+}
+
+YAML::Node emitSample(const SampleDefinition& s) {
+  YAML::Node n;
+  n["name"] = s.name;
+  n["title"] = s.title;
+  n["beam"] = s.beamMode < 0 ? std::string("any") : toString(static_cast<BeamMode>(s.beamMode));
+  if (!s.column.empty()) n["column"] = s.column;
+  n["hypothesis"] = toString(s.hypothesis);
+  YAML::Node b;
+  if (!s.binningFile.empty()) {
+    b["file"] = s.binningFile;
+  } else if (!s.binning.axes().empty()) {
+    YAML::Node vars, edges, values;
+    for (const auto& a : s.binning.axes()) {
+      vars.push_back(a.variable);
+      YAML::Node list;
+      if (a.isRange()) {
+        for (double e : a.edges) list.push_back(e);
+        list.SetStyle(YAML::EmitterStyle::Flow);
+        edges[a.variable] = list;
+      } else {
+        for (double v : a.values) list.push_back(v);
+        list.SetStyle(YAML::EmitterStyle::Flow);
+        values[a.variable] = list;
+      }
+    }
+    vars.SetStyle(YAML::EmitterStyle::Flow);
+    b["variables"] = vars;
+    if (edges.size() > 0) b["edges"] = edges;
+    if (values.size() > 0) b["values"] = values;
+  }
+  n["binning"] = b;
+  if (!s.cut.empty()) n["cut"] = s.cut;
+  return n;
+}
+
 YAML::Node emitFlux(const FluxSpec& f) {
   YAML::Node n;
   n["file"] = f.file;
@@ -233,6 +361,57 @@ Experiment Experiment::fromYamlString(const std::string& yaml, const std::string
       exp.addProduction(m);
     }
   }
+  if (root["response"]) {
+    const Block b = loadBlock(root["response"], baseDir, "response");
+    if (root["response"].IsMap() && !root["response"]["include"]) {
+      // inline: assignment may sit next to the tables
+    }
+    impl.response = Response::fromYamlString(b.text, b.baseDir);
+    impl.hasResponse = true;
+    impl.responseInclude = b.includePath;
+    const YAML::Node outer = root["response"];
+    if (outer.IsMap() && outer["assignment"]) exp.setAssignment(assignmentFromString(outer["assignment"].as<std::string>()));
+    else if (b.node.IsMap() && b.node["assignment"]) exp.setAssignment(assignmentFromString(b.node["assignment"].as<std::string>()));
+  }
+  if (root["smearing"]) {
+    const Block b = loadBlock(root["smearing"], baseDir, "smearing");
+    impl.smearing = Smearing::fromYamlString(b.text, b.baseDir);
+    impl.smearingInclude = b.includePath;
+  }
+  if (root["energy"]) exp.setEnergyEstimator(energyEstimatorFromString(root["energy"].as<std::string>()));
+  if (root["binding_energy"]) exp.setBindingEnergy(root["binding_energy"].as<double>());
+  if (root["samples"]) {
+    const Block b = loadBlock(root["samples"], baseDir, "samples");
+    YAML::Node list = b.node;
+    if (list.IsMap() && list["samples"]) list = list["samples"];
+    if (!list.IsSequence()) throw std::runtime_error("config: 'samples' must be a list (or {include: file} holding one)");
+    int i = 0;
+    for (const auto& s : list) exp.addSample(parseSample(s, b.baseDir, "samples[" + std::to_string(i++) + "]"));
+    impl.samplesInclude = b.includePath;
+  }
+  if (root["oscillation"]) {
+    const YAML::Node o = root["oscillation"];
+    rejectUnknown(o, {"preset", "s12sq", "s13sq", "s23sq", "delta_cp", "dmsq21", "dmsq32", "ordering"}, "oscillation");
+    OscillationParameters p;
+    if (o["preset"]) {
+      const std::string preset = o["preset"].as<std::string>();
+      if (preset == "asimov_A" || preset == "asimovA" || preset == "t2k_asimov_A") p = OscillationParameters::asimovA();
+      else throw std::runtime_error("config: unknown oscillation preset '" + preset + "' (asimov_A)");
+    }
+    p.s12sq = get<double>(o, "s12sq", p.s12sq);
+    p.s13sq = get<double>(o, "s13sq", p.s13sq);
+    p.s23sq = get<double>(o, "s23sq", p.s23sq);
+    p.deltaCP = get<double>(o, "delta_cp", p.deltaCP);
+    p.dmsq21 = get<double>(o, "dmsq21", p.dmsq21);
+    p.dmsq32 = get<double>(o, "dmsq32", p.dmsq32);
+    if (o["ordering"]) {
+      const std::string ord = o["ordering"].as<std::string>();
+      if (ord == "normal" || ord == "NO") p.normalOrdering = true;
+      else if (ord == "inverted" || ord == "IO") p.normalOrdering = false;
+      else throw std::runtime_error("config: oscillation.ordering must be normal or inverted");
+    }
+    exp.setOscillation(p);
+  }
   if (root["run"]) {
     const YAML::Node r = root["run"];
     rejectUnknown(r, {"work_dir", "seed", "legacy_rng_order"}, "run");
@@ -312,6 +491,49 @@ std::string Experiment::toYaml() const {
       list.push_back(m);
     }
     root["productions"] = list;
+  }
+  if (impl.hasResponse) {
+    YAML::Node r;
+    if (!impl.responseInclude.empty()) {
+      r["include"] = impl.responseInclude;
+    } else {
+      r = YAML::Load(impl.response.toYaml());
+    }
+    r["assignment"] = toString(impl.assignment);
+    root["response"] = r;
+  }
+  {
+    if (!impl.smearingInclude.empty()) {
+      YAML::Node s;
+      s["include"] = impl.smearingInclude;
+      root["smearing"] = s;
+    } else {
+      root["smearing"] = YAML::Load(impl.smearing.toYaml());
+    }
+  }
+  root["energy"] = toString(impl.estimator);
+  root["binding_energy"] = impl.bindingEnergy;
+  if (!impl.samples.empty()) {
+    if (!impl.samplesInclude.empty()) {
+      YAML::Node s;
+      s["include"] = impl.samplesInclude;
+      root["samples"] = s;
+    } else {
+      YAML::Node list;
+      for (const auto& s : impl.samples) list.push_back(emitSample(s));
+      root["samples"] = list;
+    }
+  }
+  {
+    YAML::Node o;
+    o["s12sq"] = impl.oscillation.s12sq;
+    o["s13sq"] = impl.oscillation.s13sq;
+    o["s23sq"] = impl.oscillation.s23sq;
+    o["delta_cp"] = impl.oscillation.deltaCP;
+    o["dmsq21"] = impl.oscillation.dmsq21;
+    o["dmsq32"] = impl.oscillation.dmsq32;
+    o["ordering"] = impl.oscillation.normalOrdering ? "normal" : "inverted";
+    root["oscillation"] = o;
   }
   {
     YAML::Node r;

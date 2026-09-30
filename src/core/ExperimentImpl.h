@@ -36,6 +36,18 @@ struct Experiment::Impl {
   FluxCovarianceSpec fluxCov;
   std::vector<Production> productions;
   RunSettings run;
+  // detector
+  Response response;
+  bool hasResponse = false;
+  std::string responseInclude;   ///< file the response came from (emitted as include)
+  Smearing smearing;
+  std::string smearingInclude;
+  EnergyEstimator estimator = EnergyEstimator::CCQE;
+  Assignment assignment = Assignment::Split;
+  double bindingEnergy = 0.027;
+  std::vector<SampleDefinition> samples;
+  std::string samplesInclude;
+  OscillationParameters oscillation;
   std::map<std::string, std::string> raw;  ///< sections kept verbatim for later stages
   /// Loaded flux histograms (immutable once loaded, so sharing between copies is fine).
   mutable std::map<BeamMode, std::shared_ptr<FluxHistograms>> fluxCache;

@@ -39,4 +39,21 @@ productions:
   - { beam: RHC, flux: numu,    interaction: nue,     n: 50000 }
   - { beam: RHC, flux: numubar, interaction: nuebar,  n: 50000 }
 
+# --- fake detector -------------------------------------------------------------
+# Response tables (true event -> detection probability and column probabilities),
+# the HK tables exported from the legacy chain. `split` distributes every event
+# over the columns with the probabilities as weights (deterministic).
+response: { include: response/hk_2025.yaml, assignment: split }
+smearing:
+  lepton_momentum: { type: legacy_fractional, sigma: 0.024 }   # binned sigma_p = 0.024 p, as the legacy file
+  lepton_angle:    { type: gaussian_deg, sigma: 1.8 }           # sigma_cos = sin(theta) x 1.8 degrees
+  hadronic_energy: { type: stochastic, a: 0.20, b: 0.15 }       # sigma/E = a/sqrt(E) (+) b, for the calorimetric estimator
+  electron_energy: { type: stochastic, a: 0.08, b: 0.03 }
+  muon_energy:     { type: fractional, sigma: 0.035 }
+  decay_electron_tag: { mu_plus: 0.96, mu_minus: 0.83, pi_plus: 0.45 }
+energy: ccqe               # Enu_rec from the CCQE formula (T2K-like); both estimators are always written
+binding_energy: 0.027
+samples: { include: samples/t2k_like.yaml }
+oscillation: { preset: asimov_A }
+
 run: { work_dir: ../work/hk_t2k_like, seed: 20250929 }

@@ -18,18 +18,26 @@ on a batch system). Zaku's own stages are plain in-process ROOT file processing.
 
 ## Status
 
-Stages 0 and 1 of the implementation plan are in place: build system and ROOT
-dictionary, unit conventions, the core value types (`NuSpecies`, `BeamMode`,
-`Target`, `Detector`), the `Experiment` object with its YAML builder
-([docs/config_reference.md](docs/config_reference.md)), flux loading and
-generator-ready rebinning, the flux covariance reader, and the event layer
-(flat-tree cursor, T2KReWeight weight cursor, and the join between them,
-[docs/pipeline.md](docs/pipeline.md)). The processing stages are added one at
-a time; `zaku --help` lists which are available in a given build.
+Stages 0 to 2 of the implementation plan are in place: build system and ROOT
+dictionary, unit conventions, the core value types, the `Experiment` object
+with its YAML builder ([docs/config_reference.md](docs/config_reference.md)),
+flux loading and generator-ready rebinning, the flux covariance reader, the
+event layer (flat-tree and weight cursors and their join), and the fake
+detector: response tables ([docs/response.md](docs/response.md)), smearing,
+the CCQE and calorimetric energy estimators, oscillation weights, analysis
+samples with GUNDAM binnings, and the `recon` and `select` stages
+([docs/physics.md](docs/physics.md), [docs/pipeline.md](docs/pipeline.md)).
+With the legacy configuration the chain reproduces the reference production
+bit for bit. The remaining stages (splines, covariances, GUNDAM writer,
+generator inputs) are added one at a time; `zaku --help` lists which are
+available in a given build.
 
 ```bash
 zaku configs/hk_t2k_like.yaml describe          # what the experiment asserts
 zaku configs/hk_t2k_like.yaml list-productions  # generator productions, in index order
+zaku configs/hk_t2k_like.yaml show-response     # the response tables
+zaku configs/hk_t2k_like.yaml recon             # flat trees -> recon files (needs the flat trees)
+zaku configs/hk_t2k_like.yaml select            # recon files -> FakeSelect trees + rate tables
 zaku configs/hk_t2k_like.yaml status            # which production files exist
 ```
 
