@@ -16,6 +16,7 @@
 #include "zaku/core/Manifest.h"
 #include "zaku/core/Provenance.h"
 #include "zaku/core/RunSettings.h"
+#include "zaku/core/DialCatalog.h"
 #include "zaku/core/Experiment.h"
 #include "zaku/flux/FluxHistograms.h"
 #include "zaku/flux/FluxPreparer.h"
@@ -32,6 +33,12 @@
 #include "zaku/detector/Reco.h"
 #include "zaku/detector/Binning.h"
 #include "zaku/detector/Sample.h"
+#include "zaku/detector/Shifts.h"
+#include "zaku/syst/SystematicsConfig.h"
+#include "zaku/syst/ParameterSet.h"
+#include "zaku/syst/Splines.h"
+#include "zaku/syst/Covariances.h"
+#include "zaku/syst/Summary.h"
 #include "zaku/stages/Stages.h"
 
 #endif  // ZAKU_ZAKU_H

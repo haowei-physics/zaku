@@ -50,6 +50,11 @@
 #pragma link C++ struct zaku::Provenance+;
 #pragma link C++ struct zaku::RunSettings+;
 
+// core/DialCatalog.h
+#pragma link C++ struct zaku::DialSpec+;
+#pragma link C++ class std::vector<zaku::DialSpec>+;
+#pragma link C++ class zaku::DialCatalog+;
+
 // core/Experiment.h
 #pragma link C++ class zaku::Experiment-;
 
@@ -100,10 +105,47 @@
 #pragma link C++ struct zaku::SampleDefinition+;
 #pragma link C++ class std::vector<zaku::SampleDefinition>+;
 
+// detector/Shifts.h
+#pragma link C++ namespace zaku::ShiftInjector;
+#pragma link C++ struct zaku::ShiftParameter+;
+#pragma link C++ class std::vector<zaku::ShiftParameter>+;
+
+// syst/
+#pragma link C++ namespace zaku::OscCovariance;
+#pragma link C++ namespace zaku::DetectorCovariance;
+#pragma link C++ namespace zaku::XsecCovariance;
+#pragma link C++ namespace zaku::FluxCovariance;
+#pragma link C++ struct zaku::Parameter+;
+#pragma link C++ class std::vector<zaku::Parameter>+;
+#pragma link C++ class zaku::ParameterSet+;
+#pragma link C++ struct zaku::SplineDial+;
+#pragma link C++ class std::vector<zaku::SplineDial>+;
+#pragma link C++ class zaku::SplineBuilder-;
+#pragma link C++ struct zaku::XsecSystematics+;
+#pragma link C++ struct zaku::FluxSystematics+;
+#pragma link C++ struct zaku::DetectorNorm+;
+#pragma link C++ class std::vector<zaku::DetectorNorm>+;
+#pragma link C++ struct zaku::DetectorSystematics+;
+#pragma link C++ struct zaku::OscSigmas+;
+#pragma link C++ struct zaku::OscillationSystematics+;
+#pragma link C++ struct zaku::OscGridSpec+;
+#pragma link C++ struct zaku::SystematicsConfig+;
+#pragma link C++ struct zaku::FluxCovarianceResult+;
+#pragma link C++ struct zaku::SummaryEntry+;
+#pragma link C++ class std::vector<zaku::SummaryEntry>+;
+#pragma link C++ class zaku::SummaryTable+;
+#pragma link C++ struct zaku::Spectrum+;
+#pragma link C++ class std::vector<zaku::Spectrum>+;
+#pragma link C++ class zaku::SystematicsSummary-;
+
 // stages/
 #pragma link C++ namespace zaku::stages;
 #pragma link C++ class zaku::RateTable+;
 #pragma link C++ struct zaku::stages::ReconSummary+;
 #pragma link C++ struct zaku::stages::SelectSummary+;
+#pragma link C++ struct zaku::stages::SplineSummary+;
+#pragma link C++ struct zaku::stages::ParameterSets+;
+#pragma link C++ struct zaku::stages::CovarianceSummary+;
+#pragma link C++ struct zaku::stages::SummaryResult+;
 
 #endif

@@ -4,6 +4,9 @@
 #include <vector>
 
 #include "zaku/core/Types.h"
+#include "zaku/event/WeightCursor.h"
+#include "zaku/syst/ParameterSet.h"
+#include "zaku/syst/Summary.h"
 
 class TH2D;
 
@@ -80,11 +83,74 @@ struct SelectSummary {
   std::string describe() const;
 };
 
+/// What the splines stage did to one production.
+struct SplineSummary {
+  std::string production;
+  std::string inputFile;    ///< the recon file
+  std::string weightFile;
+  std::string outputFile;
+  long long entries = 0;
+  std::vector<std::string> dials;       ///< graph branches written, in order
+  std::vector<long long> nFlat;         ///< per dial: events without response (empty graph)
+  std::vector<long long> nRejected;     ///< per dial: unusable responses (empty graph)
+  std::string stats;                    ///< the per-dial table
+  bool skipped = false;
+  std::string describe() const;
+};
+
+/// The parameter sets of an experiment, as the covariances stage writes them.
+struct ParameterSets {
+  ParameterSet osc;
+  ParameterSet det;
+  ParameterSet xsec;
+  ParameterSet fluxUnconstrained;
+  ParameterSet fluxConstrained;
+  std::vector<DialKnots> knots;   ///< the weight-file knots the xsec set was built from
+  std::string knotsSource;        ///< the file they came from
+  std::string describe() const;
+};
+
+/// What the covariances stage wrote.
+struct CovarianceSummary {
+  std::vector<std::string> files;
+  ParameterSets sets;
+  bool skipped = false;
+  std::string describe() const;
+};
+
+/// What the summary stage produced.
+struct SummaryResult {
+  std::string csvFile;
+  std::string rootFile;
+  SummaryTable table;
+  long long entries = 0;
+  bool skipped = false;
+  std::string describe() const;
+};
+
 /// Recon stage: flat tree -> recon file for one production.
 ReconSummary reconstruct(const Experiment& exp, const Production& production, bool force = false);
 
+/// Splines stage: recon file + weight file -> spline file (one TGraph branch per dial) for one production.
+SplineSummary makeSplines(const Experiment& exp, const Production& production, bool force = false);
+
 /// Select stage: recon (or spline) files of one beam mode -> FakeSelect tree + rate table.
 SelectSummary select(const Experiment& exp, BeamMode mode, bool force = false);
+
+/// The dial knots of the experiment's productions: from the first weight file
+/// that exists, else from the metadata of the first spline file. `source`
+/// receives the file used. Throws naming what to run when neither exists.
+std::vector<DialKnots> dialKnots(const Experiment& exp, std::string* source = nullptr);
+
+/// Build the parameter sets in memory (what the covariances stage writes and
+/// the summary stage evaluates). Sets whose systematics are disabled stay empty.
+ParameterSets buildParameterSets(const Experiment& exp);
+
+/// Covariances stage: write the parameter-set files, binnings and the oscillation grid.
+CovarianceSummary makeCovariances(const Experiment& exp, bool force = false);
+
+/// Summary stage: the +-1 sigma effect of every parameter on every sample, from the FakeSelect files.
+SummaryResult summarise(const Experiment& exp, bool force = false);
 
 /// Names of the branches the recon stage adds to the flat-tree clone, in order.
 const std::vector<std::string>& reconBranches();

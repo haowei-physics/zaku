@@ -18,27 +18,33 @@ on a batch system). Zaku's own stages are plain in-process ROOT file processing.
 
 ## Status
 
-Stages 0 to 2 of the implementation plan are in place: build system and ROOT
+Stages 0 to 3 of the implementation plan are in place: build system and ROOT
 dictionary, unit conventions, the core value types, the `Experiment` object
 with its YAML builder ([docs/config_reference.md](docs/config_reference.md)),
 flux loading and generator-ready rebinning, the flux covariance reader, the
-event layer (flat-tree and weight cursors and their join), and the fake
-detector: response tables ([docs/response.md](docs/response.md)), smearing,
-the CCQE and calorimetric energy estimators, oscillation weights, analysis
-samples with GUNDAM binnings, and the `recon` and `select` stages
-([docs/physics.md](docs/physics.md), [docs/pipeline.md](docs/pipeline.md)).
-With the legacy configuration the chain reproduces the reference production
-bit for bit. The remaining stages (splines, covariances, GUNDAM writer,
-generator inputs) are added one at a time; `zaku --help` lists which are
-available in a given build.
+event layer (flat-tree and weight cursors and their join), the fake detector
+(response tables, smearing, the CCQE and calorimetric energy estimators,
+oscillation weights, analysis samples with GUNDAM binnings, the `recon` and
+`select` stages; [docs/response.md](docs/response.md),
+[docs/physics.md](docs/physics.md), [docs/pipeline.md](docs/pipeline.md)), and
+the systematics ([docs/systematics.md](docs/systematics.md)): the dial
+catalogue, per-event response graphs (`splines`), the oscillation, detector,
+cross-section and flux parameter sets (`covariances`), shift systematics, and
+the ±1σ effect table (`summary`). With the legacy configuration the chain
+reproduces the reference production, its spline files and its parameter files.
+The remaining stages (GUNDAM writer, generator inputs) are added one at a time;
+`zaku --help` lists which are available in a given build.
 
 ```bash
 zaku configs/hk_t2k_like.yaml describe          # what the experiment asserts
 zaku configs/hk_t2k_like.yaml list-productions  # generator productions, in index order
-zaku configs/hk_t2k_like.yaml show-response     # the response tables
+zaku configs/hk_t2k_like.yaml list-dials        # the dial catalogue, fitted dials marked
 zaku configs/hk_t2k_like.yaml recon             # flat trees -> recon files (needs the flat trees)
-zaku configs/hk_t2k_like.yaml select            # recon files -> FakeSelect trees + rate tables
-zaku configs/hk_t2k_like.yaml status            # which production files exist
+zaku configs/hk_t2k_like.yaml splines           # recon + weight files -> spline files (response graphs)
+zaku configs/hk_t2k_like.yaml select            # spline/recon files -> FakeSelect trees + rate tables
+zaku configs/hk_t2k_like.yaml covariances       # parameter-set files, binnings, oscillation grid
+zaku configs/hk_t2k_like.yaml summary           # +-1 sigma effect of every parameter on every sample
+zaku configs/hk_t2k_like.yaml status            # which files exist
 ```
 
 ## Build

@@ -45,4 +45,21 @@ energy: calorimetric       # Enu_rec = Elep_rec + Ehad_rec
 samples: { include: samples/nova_like.yaml }
 oscillation: { preset: asimov_A }
 
+# --- systematics --------------------------------------------------------------
+# The detector systematics of a calorimeter are energy scales rather than
+# per-sample normalisations: `mode: shifts` builds the detector covariance
+# from the shift universes below (per sample and Enu_rec bin).
+systematics:
+  xsec:
+    dials: { include: dials/neut_default.yaml }
+    exclude: [MDLSPiEj, NucleonFSI_PB, SRCFrac_C, RadCorr_rate]
+  detector:
+    mode: shifts
+  oscillation:
+    fixed: [PMNS_SIGN_MASS_SQUARED_32]
+shifts:
+  - { name: muon_energy_scale,     target: lepton_energy,   kind: scale, sigma: 0.02, apply_to: muon }
+  - { name: em_energy_scale,       target: lepton_energy,   kind: scale, sigma: 0.05, apply_to: electron }
+  - { name: hadronic_energy_scale, target: hadronic_energy, kind: scale, sigma: 0.05, apply_to: all }
+
 run: { work_dir: ../work/hk_nova_like, seed: 20250929 }

@@ -10,11 +10,14 @@
 #include "zaku/core/Production.h"
 #include "zaku/core/RunSettings.h"
 #include "zaku/core/Types.h"
+#include "zaku/core/DialCatalog.h"
 #include "zaku/detector/Reco.h"
 #include "zaku/detector/Response.h"
 #include "zaku/detector/Sample.h"
+#include "zaku/detector/Shifts.h"
 #include "zaku/detector/Smearing.h"
 #include "zaku/osc/Oscillator.h"
+#include "zaku/syst/SystematicsConfig.h"
 
 namespace zaku {
 
@@ -131,14 +134,37 @@ public:
   /// NuFast for this experiment's baseline and matter.
   Oscillator oscillator() const;
 
+  // --- systematics --------------------------------------------------------
+  /// The `systematics:` block: dial catalogue, which dials are fitted, the
+  /// detector normalisations, the oscillation prior widths, the energy grid.
+  Experiment& setSystematics(const SystematicsConfig& s);
+  const SystematicsConfig& systematics() const;
+  /// Shorthand for systematics().xsec.dials.
+  Experiment& setDialCatalog(const DialCatalog& c);
+  const DialCatalog& dialCatalog() const;
+  bool hasDialCatalog() const;
+  /// Shift systematics (energy/momentum scales and offsets), evaluated by the
+  /// summary stage and, in detector mode `shifts`, turned into the detector covariance.
+  Experiment& addShift(const ShiftParameter& s);
+  Experiment& clearShifts();
+  const std::vector<ShiftParameter>& shifts() const;
+
   // --- processing stages ------------------------------------------------
   /// Apply the response, smearing and energy estimators to one production
   /// (or, with an empty name, to all). Reads the flat tree, writes the recon file.
   void reconstruct(const std::string& production = "", bool force = false);
+  /// Build the per-event response graphs of one production (or all): reads
+  /// the recon and weight files, writes the spline file.
+  void makeSplines(const std::string& production = "", bool force = false);
   /// Assign samples and write the FakeSelect tree and rate table of one beam
   /// mode (or all). Reads the spline files when present, else the recon files.
   void select(BeamMode mode, bool force = false);
   void select(bool force = false);
+  /// Write the parameter-set files (oscillation, detector, cross section,
+  /// flux), their binnings and the oscillation grid under parameters/.
+  void makeCovariances(bool force = false);
+  /// The +-1 sigma effect of every parameter on every sample (summary/).
+  void summariseSystematics(bool force = false);
 
   // --- run -------------------------------------------------------------
   Experiment& setRun(const std::string& workDir, unsigned seed = 20250929);

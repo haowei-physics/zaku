@@ -1,0 +1,29 @@
+# NEUT reweighting dials of the reference production, with the tweak points of
+# T2KReWeight's config/CI/neut_dial_tweaks.toml (in units of each dial's one
+# sigma). `fit: false` marks dials whose weights are produced but which do not
+# enter the cross-section parameter set (the legacy fit excluded them).
+#
+# The reweight stage writes this list into the T2KReWeight card; the
+# systematics stage recovers each dial's sigma from the knots of the weight
+# file divided by these multiples, so the two must agree.
+generator: neut
+dials:
+  - { name: MaCCQE,   tweaks: [-2, -1, 1, 2], note: "CCQE axial mass" }
+  - { name: MaRES,    tweaks: [-2, -1, 1, 2], note: "resonant axial mass" }
+  - { name: CA5RES,   tweaks: [-2, -1, 1, 2], note: "resonant axial form factor at Q2 = 0" }
+  - { name: BgSclRES, tweaks: [-2, -1, 1, 2], note: "non-resonant I=1/2 background scale" }
+  - { name: MDLSPiEj, tweaks: [-3, -2], fit: false, note: "single-pion ejection model switch, not a continuous parameter" }
+  - { name: NucleonFSI_Double,  tweaks: [-1, -0.5, 0.5, 1], note: "nucleon FSI" }
+  - { name: NucleonFSI_Elastic, tweaks: [-1, -0.5, 0.5, 1], note: "nucleon FSI" }
+  - { name: NucleonFSI_Single,  tweaks: [-1, -0.5, 0.5, 1], note: "nucleon FSI" }
+  - { name: NucleonFSI_Total,   tweaks: [-1, -0.5, 0.5, 1], note: "nucleon FSI" }
+  - { name: NucleonFSI_PB,      tweaks: [-1, -0.5, 0.5, 1], fit: false, note: "Pauli blocking in the cascade; excluded by the legacy fit" }
+  - { name: PionFSI_AbsProb,        tweaks: [-1, -0.5, 0.5, 1], note: "pion FSI" }
+  - { name: PionFSI_QELowMomProb,   tweaks: [-1, -0.5, 0.5, 1], note: "pion FSI" }
+  - { name: PionFSI_QEHighMomProb,  tweaks: [-1, -0.5, 0.5, 1], note: "pion FSI" }
+  - { name: PionFSI_CExLowMomProb,  tweaks: [-1, -0.5, 0.5, 1], note: "pion FSI" }
+  - { name: PionFSI_CExHighMomProb, tweaks: [-1, -0.5, 0.5, 1], note: "pion FSI" }
+  - { name: PionFSI_InelProb, tweaks: [-0.9, -0.5, 0.5, 1], note: "pion FSI; -0.9 sigma keeps the probability positive, so the knots are not evenly spaced (GUNDAM: akima)" }
+  - { name: SRCFrac_C, tweaks: [0.25, 0.5], fit: false, note: "carbon SRC fraction; the detector is water" }
+  - { name: SRCFrac_O, tweaks: [0.25, 0.5], note: "oxygen SRC fraction (one-sided tweaks)" }
+  - { name: RadCorr_rate, tweaks: [0, 0.25, 0.75], fit: false, note: "radiative-correction rate; excluded by the legacy fit" }

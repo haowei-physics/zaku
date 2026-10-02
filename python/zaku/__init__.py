@@ -113,6 +113,37 @@ Assignment = _ns.Assignment
 RateTable = _ns.RateTable
 stages = _ns.stages
 
+# Stage 3: systematics
+DialSpec = _ns.DialSpec
+DialCatalog = _ns.DialCatalog
+Parameter = _ns.Parameter
+ParameterSet = _ns.ParameterSet
+SplineDial = _ns.SplineDial
+SplineBuilder = _ns.SplineBuilder
+SplineDecision = _ns.SplineDecision
+SystematicsConfig = _ns.SystematicsConfig
+XsecSystematics = _ns.XsecSystematics
+FluxSystematics = _ns.FluxSystematics
+DetectorNorm = _ns.DetectorNorm
+DetectorSystematics = _ns.DetectorSystematics
+OscSigmas = _ns.OscSigmas
+OscillationSystematics = _ns.OscillationSystematics
+OscGridSpec = _ns.OscGridSpec
+OscCovariance = _ns.OscCovariance
+DetectorCovariance = _ns.DetectorCovariance
+XsecCovariance = _ns.XsecCovariance
+FluxCovariance = _ns.FluxCovariance
+FluxCovarianceResult = _ns.FluxCovarianceResult
+ShiftParameter = _ns.ShiftParameter
+ShiftTarget = _ns.ShiftTarget
+ShiftKind = _ns.ShiftKind
+ShiftApplyTo = _ns.ShiftApplyTo
+ShiftInjector = _ns.ShiftInjector
+SummaryEntry = _ns.SummaryEntry
+SummaryTable = _ns.SummaryTable
+Spectrum = _ns.Spectrum
+SystematicsSummary = _ns.SystematicsSummary
+
 DATA_DIR = _os.environ.get("ZAKU_DATA", "")
 
 
@@ -159,5 +190,10 @@ __all__ = [
     "ResponseTable", "ResponseResult", "Response", "ResolutionModel", "DecayElectronTagging", "Smearing",
     "Hypothesis", "EnergyEstimator", "RecoObservables", "reco", "BinningAxis", "Bin", "Binning",
     "SampleDefinition", "Assignment", "RateTable", "stages",
+    "DialSpec", "DialCatalog", "Parameter", "ParameterSet", "SplineDial", "SplineBuilder", "SplineDecision",
+    "SystematicsConfig", "XsecSystematics", "FluxSystematics", "DetectorNorm", "DetectorSystematics", "OscSigmas",
+    "OscillationSystematics", "OscGridSpec", "OscCovariance", "DetectorCovariance", "XsecCovariance", "FluxCovariance",
+    "FluxCovarianceResult", "ShiftParameter", "ShiftTarget", "ShiftKind", "ShiftApplyTo", "ShiftInjector",
+    "SummaryEntry", "SummaryTable", "Spectrum", "SystematicsSummary",
     "DATA_DIR", "strings", "to_numpy",
 ]

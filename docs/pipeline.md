@@ -26,7 +26,11 @@ selected event category. For the production `numu_x_nue_50K_FHC`:
 | `numu/numu_x_nue_50K_FHC_fakerecon.root` | `recon` | flat tree clone + response, smearing and energy branches |
 | `numu/numu_x_nue_50K_FHC_spline.root` | `splines` | recon tree + one `TGraph` branch per dial |
 | `fakeselect_FHC.root`, `fakeselect_FHC_rates.csv` | `select` | the `FakeSelect` tree GUNDAM reads, and the rate table |
-| `parameters/{oscProb,flux,det,xsec}/…` | `covariances` | parameter-set files |
+| `parameters/oscProb/{oscCov,grid}.root` | `covariances` | oscillation parameter set and the true-energy grid |
+| `parameters/det/{detCov.root,detBinning.txt}` | `covariances` | detector parameter set and its `EventType` binning |
+| `parameters/xsec/xsecCov.root` | `covariances` | cross-section parameter set (with bounds) |
+| `parameters/flux/{fluxCov,fluxCov_ND}.root`, `fluxBinning.txt` | `covariances` | flux parameter sets, without and with the ND constraint, and their binning |
+| `summary/systematics_summary.{csv,root}` | `summary` | ±1σ effect of every parameter on every sample |
 | `manifests/<stage>.txt`, `.json` | prepare stages | command lines for you to run |
 | `gen/<production>/` | prepare-generation | per-job working directory (cards, seed files) |
 | `flux/uniform_<beam>.root` | prepare-generation | generator-ready uniform-bin flux copies |
@@ -93,6 +97,18 @@ dropped) plus, per event:
 
 `FlatTree_FLUX` and `FlatTree_EVT` are copied through.
 
+## The spline file
+
+`splines` (`Experiment::makeSplines`, `zaku <exp> splines [--production <name>]`)
+joins the recon file with the weight file and writes `<name>_spline.root`: the
+recon tree (every branch) plus one unsplit `TGraph` branch per dial, named
+after the dial, holding the event's weight at each knot (nominal inserted at
+weight 1; empty when the dial does not touch the event or the response is
+unusable, see [systematics.md](systematics.md)). `FlatTree_FLUX/EVT` and
+`zaku/response_columns` are copied through; `zaku/dials` holds the knots of
+every dial (`name=nominal:k1,k2,…` per line). The select stage prefers spline
+files over recon files when they exist, so the FakeSelect tree carries the graphs.
+
 ## The FakeSelect file
 
 `select` (`Experiment::select`, `zaku <exp> select`) reads, per beam mode, the
@@ -118,6 +134,17 @@ The GUNDAM nominal weight is `POTWeight × SelEffWeight × SampleProb × (cc != 
 
 The file also holds the `rates` TH2 (production × sample, expected events) and
 the same table is written as `fakeselect_<mode>_rates.csv`.
+
+## Parameter files
+
+Each set is one ROOT file with `<prefix>_param_names` (`TObjArray` of
+`TObjString`, single key), `<prefix>_param_priors` (`TVectorD`),
+`<prefix>_param_cov` (`TMatrixD`) and, for the cross section, `_lower`/`_upper`
+(`TVectorD`); `<prefix>` is `osc`, `det`, `xsec` or `flux`. Binning text files
+list one row per parameter in matrix order (`variables: EventType` for the
+detector normalisations, `variables: isRHC flux_pdg Enu_true Enu_true` for the
+flux). `zaku::ParameterSet::read/write` handle the layout. Contents and
+conventions: [systematics.md](systematics.md).
 
 ## Normalisation
 

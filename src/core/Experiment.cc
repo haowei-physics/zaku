@@ -273,7 +273,58 @@ Oscillator Experiment::oscillator() const {
   return Oscillator(impl_->oscillation, impl_->baseline_km, rhoYe(), 0);
 }
 
+// --- systematics -------------------------------------------------------------
+
+Experiment& Experiment::setSystematics(const SystematicsConfig& s) {
+  impl_->systematics = s;
+  return *this;
+}
+const SystematicsConfig& Experiment::systematics() const { return impl_->systematics; }
+Experiment& Experiment::setDialCatalog(const DialCatalog& c) {
+  impl_->systematics.xsec.dials = c;
+  impl_->systematics.xsec.dialsInclude.clear();
+  return *this;
+}
+const DialCatalog& Experiment::dialCatalog() const { return impl_->systematics.xsec.dials; }
+bool Experiment::hasDialCatalog() const { return !impl_->systematics.xsec.dials.empty(); }
+Experiment& Experiment::addShift(const ShiftParameter& s) {
+  if (s.name.empty()) throw std::invalid_argument("Experiment::addShift: the shift has no name");
+  if (s.sigma <= 0.0) throw std::invalid_argument("Experiment::addShift: '" + s.name + "' needs a positive sigma");
+  for (const auto& o : impl_->shifts) {
+    if (o.name == s.name) throw std::invalid_argument("Experiment::addShift: a shift named '" + s.name + "' already exists");
+  }
+  impl_->shifts.push_back(s);
+  return *this;
+}
+Experiment& Experiment::clearShifts() {
+  impl_->shifts.clear();
+  return *this;
+}
+const std::vector<ShiftParameter>& Experiment::shifts() const { return impl_->shifts; }
+
 // --- processing stages ------------------------------------------------------
+
+void Experiment::makeSplines(const std::string& productionName, bool force) {
+  if (!productionName.empty()) {
+    const stages::SplineSummary s = stages::makeSplines(*this, production(productionName), force);
+    Info("zaku::Experiment::makeSplines", "%s", s.describe().c_str());
+    return;
+  }
+  for (const auto& p : impl_->productions) {
+    const stages::SplineSummary s = stages::makeSplines(*this, p, force);
+    Info("zaku::Experiment::makeSplines", "%s", s.describe().c_str());
+  }
+}
+
+void Experiment::makeCovariances(bool force) {
+  const stages::CovarianceSummary s = stages::makeCovariances(*this, force);
+  Info("zaku::Experiment::makeCovariances", "%s", s.describe().c_str());
+}
+
+void Experiment::summariseSystematics(bool force) {
+  const stages::SummaryResult s = stages::summarise(*this, force);
+  Info("zaku::Experiment::summariseSystematics", "%s", s.describe().c_str());
+}
 
 void Experiment::reconstruct(const std::string& productionName, bool force) {
   if (!productionName.empty()) {
@@ -348,6 +399,15 @@ std::string Experiment::describe() const {
   os << "  " << impl_->samples.size() << " sample(s):\n";
   for (std::size_t i = 0; i < impl_->samples.size(); ++i) os << "    [" << i << "] " << impl_->samples[i].describe() << "\n";
   os << "  oscillation: " << impl_->oscillation.describe() << "\n";
+  {
+    std::istringstream sys(impl_->systematics.describe());
+    std::string line;
+    while (std::getline(sys, line)) os << "  " << line << "\n";
+  }
+  if (!impl_->shifts.empty()) {
+    os << "  " << impl_->shifts.size() << " shift systematic(s):\n";
+    for (const auto& s : impl_->shifts) os << "    " << s.describe() << "\n";
+  }
   os << "  run: work dir '" << impl_->run.workDir << "', seed " << impl_->run.seed
      << (impl_->run.legacyRngOrder ? ", legacy RNG order" : "") << "\n";
   for (const auto& kv : impl_->raw) os << "  section '" << kv.first << "' kept for a later stage\n";
@@ -369,7 +429,14 @@ std::string Experiment::status() const {
     os << "  " << std::left << std::setw(36) << ("select " + toString(kv.first)) << mark(Layout::selectFile(kv.first))
        << "\n";
   }
-  os << "  " << std::left << std::setw(36) << "parameters" << mark(Layout::parametersDirectory()) << "\n";
+  os << "  " << std::left << std::setw(36) << "parameters: oscillation" << mark(Layout::oscCovarianceFile()) << "  grid "
+     << mark(Layout::oscGridFile()) << "\n";
+  os << "  " << std::left << std::setw(36) << "parameters: detector" << mark(Layout::detCovarianceFile()) << "  binning "
+     << mark(Layout::detBinningFile()) << "\n";
+  os << "  " << std::left << std::setw(36) << "parameters: cross section" << mark(Layout::xsecCovarianceFile()) << "\n";
+  os << "  " << std::left << std::setw(36) << "parameters: flux" << mark(Layout::fluxCovarianceFile(false)) << "  ND "
+     << mark(Layout::fluxCovarianceFile(true)) << "  binning " << mark(Layout::fluxBinningFile()) << "\n";
+  os << "  " << std::left << std::setw(36) << "systematics summary" << mark(Layout::summaryCsvFile()) << "\n";
   return os.str();
 }
 
@@ -398,6 +465,16 @@ void Experiment::validate() const {
     }
   }
   if (impl_->run.workDir.empty()) problems.push_back("run.work_dir is not set");
+  if (impl_->systematics.detector.enabled && impl_->systematics.detector.mode == "normalisation") {
+    for (const auto& s : impl_->samples) {
+      if (!impl_->systematics.detector.norm(s.name)) {
+        problems.push_back("systematics.detector.sigmas has no entry for sample '" + s.name + "'");
+      }
+    }
+  }
+  if (impl_->systematics.detector.mode == "shifts" && impl_->shifts.empty()) {
+    problems.push_back("systematics.detector.mode is 'shifts' but no `shifts:` are defined");
+  }
   if (problems.empty()) return;
   std::string msg = "Experiment '" + impl_->name + "' is incomplete:";
   for (const auto& p : problems) msg += "\n  - " + p;

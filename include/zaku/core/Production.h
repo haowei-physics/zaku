@@ -52,6 +52,16 @@ std::string jobDirectory(const Production& s);    ///< gen/<name>: per-job worki
 std::string selectFile(BeamMode mode);          ///< fakeselect_<mode>.root
 std::string rateTableFile(BeamMode mode);       ///< fakeselect_<mode>_rates.csv
 std::string parametersDirectory();              ///< parameters
+std::string oscCovarianceFile();                ///< parameters/oscProb/oscCov.root
+std::string oscGridFile();                      ///< parameters/oscProb/grid.root
+std::string detCovarianceFile();                ///< parameters/det/detCov.root
+std::string detBinningFile();                   ///< parameters/det/detBinning.txt
+std::string xsecCovarianceFile();               ///< parameters/xsec/xsecCov.root
+std::string fluxCovarianceFile(bool ndConstrained);  ///< parameters/flux/fluxCov.root or fluxCov_ND.root
+std::string fluxBinningFile();                  ///< parameters/flux/fluxBinning.txt
+std::string summaryDirectory();                 ///< summary
+std::string summaryCsvFile();                   ///< summary/systematics_summary.csv
+std::string summaryRootFile();                  ///< summary/systematics_summary.root
 std::string manifestsDirectory();               ///< manifests
 std::string uniformFluxFile(BeamMode mode);     ///< flux/uniform_<mode>.root
 }  // namespace Layout

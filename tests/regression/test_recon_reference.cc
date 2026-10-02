@@ -28,17 +28,17 @@ void link(const std::string& target, const std::string& linkPath) {
   }
 }
 
-struct Compare {
+struct ReconCompare {
   long long entries = 0, exactP = 0, exactCos = 0, exactME = 0, exactCat = 0;
   double maxPot = 0, maxOsc = 0, maxEff = 0;
 };
 
-Compare compare(const std::string& mine, const std::string& ref) {
+ReconCompare compare(const std::string& mine, const std::string& ref) {
   std::unique_ptr<TFile> fm(TFile::Open(mine.c_str(), "READ"));
   std::unique_ptr<TFile> fr(TFile::Open(ref.c_str(), "READ"));
   TTree* tm = fm->Get<TTree>("FlatTree_VARS");
   TTree* tr = fr->Get<TTree>("FlatTree_VARS");
-  Compare c;
+  ReconCompare c;
   if (!tm || !tr) return c;
   c.entries = tr->GetEntries();
   if (tm->GetEntries() != tr->GetEntries()) return c;
@@ -95,7 +95,7 @@ int run() {
     const stages::ReconSummary s = stages::reconstruct(exp, prod, /*force=*/true);
     std::printf("%s\n", s.describe().c_str());
     ZAKU_CHECK_EQ(static_cast<int>(s.seed), 1234);
-    const Compare c = compare(exp.path(Layout::reconFile(prod)), ref + "/" + Layout::reconFile(prod));
+    const ReconCompare c = compare(exp.path(Layout::reconFile(prod)), ref + "/" + Layout::reconFile(prod));
     const long long expected = std::string(name) == "numu_x_numu_200K_FHC" ? 198495 : 49588;
     ZAKU_CHECK_EQ(static_cast<int>(s.kept), static_cast<int>(expected));
     ZAKU_CHECK_EQ(static_cast<int>(c.entries), static_cast<int>(expected));

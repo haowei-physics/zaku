@@ -48,4 +48,14 @@ binding_energy: 0.027
 samples: { include: samples/t2k_like.yaml }
 oscillation: { preset: asimov_A }
 
+systematics:
+  xsec:
+    dials: { include: dials/neut_default.yaml }
+    exclude: [MDLSPiEj, NucleonFSI_PB, SRCFrac_C, RadCorr_rate]
+  detector:
+    sigmas: { FHC_1Rmu: 0.021, FHC_1Re0de: 0.031, FHC_1Re1de: 0.132, RHC_1Rmu: 0.019, RHC_1Re0de: 0.039 }
+    pairs: [[FHC_1Rmu, RHC_1Rmu], [FHC_1Re0de, RHC_1Re0de]]
+shifts:
+  - { name: lepton_momentum_scale, target: lepton_momentum, kind: scale, sigma: 0.024 }
+
 run: { work_dir: ../work/tiny_test, seed: 20250929 }

@@ -30,12 +30,13 @@ const StageInfo kStages[] = {
     {"prepare-weights", "write dial configs + weight manifest", false},
     {"prepare-flatten", "write the flatten manifest", false},
     {"recon", "apply the response, smearing and energy estimators", true},
-    {"splines", "build per-event systematic splines", false},
+    {"splines", "build per-event systematic response graphs (recon + weight files)", true},
     {"select", "assign samples, write the FakeSelect tree and rate table", true},
-    {"covariances", "write the parameter-set files", false},
-    {"summary", "summarise the systematics", false},
+    {"covariances", "write the parameter-set files, binnings and oscillation grid", true},
+    {"summary", "the +-1 sigma effect of every parameter on every sample", true},
     {"gundam-config", "write the GUNDAM configuration tree + fit manifest", false},
-    {"list-dials", "print the dial catalogue", false},
+    {"list-dials", "print the dial catalogue (fitted dials marked)", true},
+    {"show-systematics", "print the parameter sets as this build would write them", true},
     {"list-models", "print the NEUT model choices", false},
     {"list-tunes", "print the GENIE tune catalogue", false},
     {"show-response", "print the response tables (or write them as YAML with --yaml)", true},
@@ -112,6 +113,51 @@ int run(const Options& opt) {
   }
   if (stage == "select") {
     exp.select(opt.force);
+    return 0;
+  }
+  if (stage == "splines") {
+    exp.makeSplines(opt.production, opt.force);
+    return 0;
+  }
+  if (stage == "covariances") {
+    exp.makeCovariances(opt.force);
+    return 0;
+  }
+  if (stage == "summary") {
+    exp.summariseSystematics(opt.force);
+    return 0;
+  }
+  if (stage == "list-dials") {
+    if (!exp.hasDialCatalog()) {
+      std::fprintf(stderr, "zaku: the experiment has no dial catalogue (systematics.xsec.dials)\n");
+      return 2;
+    }
+    if (opt.yaml) {
+      std::printf("%s", exp.dialCatalog().toYaml().c_str());
+      return 0;
+    }
+    const std::vector<std::string> fitted = exp.systematics().xsec.fitted();
+    for (const auto& d : exp.dialCatalog().dials()) {
+      bool fit = false;
+      for (const auto& f : fitted) fit = fit || f == d.name;
+      std::printf("%-26s %s  %s\n", d.name.c_str(), fit ? "fitted    " : "not fitted", d.describe().c_str());
+    }
+    return 0;
+  }
+  if (stage == "show-systematics") {
+    std::printf("%s", exp.systematics().describe().c_str());
+    // the cross-section set needs a weight file; show the others regardless
+    try {
+      const zaku::stages::ParameterSets sets = zaku::stages::buildParameterSets(exp);
+      std::printf("%s", sets.describe().c_str());
+    } catch (const std::exception& e) {
+      std::printf("(cross-section set not available yet: %s)\n", e.what());
+      zaku::Experiment partial = exp;
+      zaku::SystematicsConfig cfg = exp.systematics();
+      cfg.xsec.enabled = false;
+      partial.setSystematics(cfg);
+      std::printf("%s", zaku::stages::buildParameterSets(partial).describe().c_str());
+    }
     return 0;
   }
   for (const auto& s : kStages) {

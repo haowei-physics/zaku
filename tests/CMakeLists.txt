@@ -87,6 +87,23 @@ if(ZAKU_BUILD_APPS)
   set_tests_properties(cli_show_samples PROPERTIES PASS_REGULAR_EXPRESSION "RHC_1Re0de")
 endif()
 
+# --- Stage 3 ----------------------------------------------------------------
+zaku_add_cxx_test(test_parameter_set unit/test_parameter_set.cc unit)
+zaku_add_cxx_test(test_splines       unit/test_splines.cc       unit)
+zaku_add_cxx_test(test_covariances   unit/test_covariances.cc   unit)
+zaku_add_cxx_test(test_shifts        unit/test_shifts.cc        unit)
+zaku_add_python_test(python_systematics python/test_systematics.py python unit)
+zaku_add_cxx_test(regression_syst_reference regression/test_syst_reference.cc regression)
+set_tests_properties(regression_syst_reference PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 3600)
+
+if(ZAKU_BUILD_APPS)
+  add_test(NAME cli_list_dials COMMAND zaku ${CMAKE_SOURCE_DIR}/configs/hk_t2k_like.yaml list-dials)
+  add_test(NAME cli_show_systematics COMMAND zaku ${CMAKE_SOURCE_DIR}/configs/hk_t2k_like.yaml show-systematics)
+  set_tests_properties(cli_list_dials cli_show_systematics PROPERTIES ENVIRONMENT "${ZAKU_TEST_ENV}" LABELS "unit")
+  set_tests_properties(cli_list_dials PROPERTIES PASS_REGULAR_EXPRESSION "PionFSI_InelProb .*fitted")
+  set_tests_properties(cli_show_systematics PROPERTIES PASS_REGULAR_EXPRESSION "osc parameter set")
+endif()
+
 if(ZAKU_BUILD_APPS)
   add_test(NAME cli_describe COMMAND zaku ${CMAKE_SOURCE_DIR}/configs/hk_t2k_like.yaml describe)
   add_test(NAME cli_list_productions COMMAND zaku ${CMAKE_SOURCE_DIR}/configs/legacy_hk_mock.yaml list-productions)

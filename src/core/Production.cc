@@ -50,6 +50,18 @@ std::string jobDirectory(const Production& s) { return "gen/" + productionName(s
 std::string selectFile(BeamMode mode) { return "fakeselect_" + toString(mode) + ".root"; }
 std::string rateTableFile(BeamMode mode) { return "fakeselect_" + toString(mode) + "_rates.csv"; }
 std::string parametersDirectory() { return "parameters"; }
+std::string oscCovarianceFile() { return "parameters/oscProb/oscCov.root"; }
+std::string oscGridFile() { return "parameters/oscProb/grid.root"; }
+std::string detCovarianceFile() { return "parameters/det/detCov.root"; }
+std::string detBinningFile() { return "parameters/det/detBinning.txt"; }
+std::string xsecCovarianceFile() { return "parameters/xsec/xsecCov.root"; }
+std::string fluxCovarianceFile(bool ndConstrained) {
+  return ndConstrained ? "parameters/flux/fluxCov_ND.root" : "parameters/flux/fluxCov.root";
+}
+std::string fluxBinningFile() { return "parameters/flux/fluxBinning.txt"; }
+std::string summaryDirectory() { return "summary"; }
+std::string summaryCsvFile() { return "summary/systematics_summary.csv"; }
+std::string summaryRootFile() { return "summary/systematics_summary.root"; }
 std::string manifestsDirectory() { return "manifests"; }
 std::string uniformFluxFile(BeamMode mode) { return "flux/uniform_" + toString(mode) + ".root"; }
 

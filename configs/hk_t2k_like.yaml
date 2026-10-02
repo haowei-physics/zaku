@@ -56,4 +56,32 @@ binding_energy: 0.027
 samples: { include: samples/t2k_like.yaml }
 oscillation: { preset: asimov_A }
 
+# --- systematics --------------------------------------------------------------
+# The dial catalogue is the list of cross-section systematics: the reweight
+# stage writes it into the T2KReWeight card, the splines stage builds one
+# response graph per dial and event, the covariances stage turns the fitted
+# dials into the cross-section parameter set. See docs/systematics.md.
+systematics:
+  xsec:
+    dials: { include: dials/neut_default.yaml }
+    exclude: [MDLSPiEj, NucleonFSI_PB, SRCFrac_C, RadCorr_rate]
+    write_unused_dials: true
+  flux: { enabled: true }                 # nd_constraint is set under flux_covariance
+  detector:
+    mode: normalisation                   # one normalisation per sample (arXiv:2505.15019 Tab. 3, T2K-systematics column)
+    sigmas: { FHC_1Rmu: 0.021, FHC_1Re0de: 0.031, FHC_1Re1de: 0.132, RHC_1Rmu: 0.019, RHC_1Re0de: 0.039 }
+    correlation: 0.0                      # 0.98 is what the FHC/RHC 1Re ratio of Tab. 3 implies
+    pairs: [[FHC_1Rmu, RHC_1Rmu], [FHC_1Re0de, RHC_1Re0de]]
+  oscillation:
+    sigmas: { s12sq: 0.013, s13sq: 0.0007, s23sq: 0.021, dmsq21: 1.8e-6, dmsq32: 3.4e-5, delta_cp: 1.17, ordering: 0.1 }
+    fixed: [PMNS_SIGN_MASS_SQUARED_32]
+  grid: { bins: 2000, min: 0.0, max: 10.0 }
+
+# Shift systematics: evaluated by the summary stage (events migrate between
+# reconstructed-energy bins); with detector.mode: shifts they become the
+# detector covariance instead of the per-sample normalisations.
+shifts:
+  - { name: lepton_momentum_scale, target: lepton_momentum, kind: scale, sigma: 0.024, apply_to: all }
+  - { name: hadronic_energy_scale, target: hadronic_energy, kind: scale, sigma: 0.05,  apply_to: all }
+
 run: { work_dir: ../work/hk_t2k_like, seed: 20250929 }

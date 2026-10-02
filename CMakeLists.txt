@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Zaku VERSION 0.2.0 LANGUAGES CXX
+project(Zaku VERSION 0.3.0 LANGUAGES CXX
         DESCRIPTION "Zaku Assembles Kinematics and Systematics")
 
 # ---------------------------------------------------------------------------
@@ -52,6 +52,7 @@ set(ZAKU_SOURCES
   src/core/Production.cc
   src/core/Manifest.cc
   src/core/Provenance.cc
+  src/core/DialCatalog.cc
   src/core/Experiment.cc
   src/core/ExperimentYaml.cc
   src/flux/FluxHistograms.cc
@@ -70,9 +71,17 @@ set(ZAKU_SOURCES
   src/detector/Reco.cc
   src/detector/Binning.cc
   src/detector/Sample.cc
+  src/detector/Shifts.cc
+  src/syst/ParameterSet.cc
+  src/syst/Splines.cc
+  src/syst/Covariances.cc
+  src/syst/Summary.cc
   src/stages/RateTable.cc
   src/stages/Reconstruct.cc
   src/stages/Select.cc
+  src/stages/Splines.cc
+  src/stages/Covariances.cc
+  src/stages/Summary.cc
   third_party/NuFast/NuFast_LBL.cc
 )
 
@@ -89,6 +98,7 @@ set(ZAKU_DICT_HEADERS
   zaku/core/Manifest.h
   zaku/core/Provenance.h
   zaku/core/RunSettings.h
+  zaku/core/DialCatalog.h
   zaku/core/Experiment.h
   zaku/flux/FluxHistograms.h
   zaku/flux/FluxPreparer.h
@@ -105,6 +115,12 @@ set(ZAKU_DICT_HEADERS
   zaku/detector/Reco.h
   zaku/detector/Binning.h
   zaku/detector/Sample.h
+  zaku/detector/Shifts.h
+  zaku/syst/SystematicsConfig.h
+  zaku/syst/ParameterSet.h
+  zaku/syst/Splines.h
+  zaku/syst/Covariances.h
+  zaku/syst/Summary.h
   zaku/stages/Stages.h
   zaku/Zaku.h
 )

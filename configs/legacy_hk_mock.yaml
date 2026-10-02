@@ -50,4 +50,22 @@ binding_energy: 0.027
 samples: { include: samples/t2k_like.yaml }
 oscillation: { preset: asimov_A }
 
+# --- systematics, exactly as the legacy MakeCovariances.C -------------------------
+systematics:
+  xsec:
+    dials: { include: dials/neut_default.yaml }
+    exclude: [MDLSPiEj, NucleonFSI_PB, SRCFrac_C, RadCorr_rate]
+    write_unused_dials: true            # the legacy spline files carry all 19 dials
+  detector:
+    mode: normalisation
+    sigmas: { FHC_1Rmu: 0.021, FHC_1Re0de: 0.031, FHC_1Re1de: 0.132, RHC_1Rmu: 0.019, RHC_1Re0de: 0.039 }
+    names:  { FHC_1Rmu: DET_NORM_FHC_1RMU, FHC_1Re0de: DET_NORM_FHC_1RE_0DE, FHC_1Re1de: DET_NORM_FHC_1RE_1DE,
+              RHC_1Rmu: DET_NORM_RHC_1RMU, RHC_1Re0de: DET_NORM_RHC_1RE_0DE }
+    correlation: 0.0
+    pairs: [[FHC_1Rmu, RHC_1Rmu], [FHC_1Re0de, RHC_1Re0de]]
+  oscillation:
+    sigmas: { s12sq: 0.013, s13sq: 0.0007, s23sq: 0.021, dmsq21: 1.8e-6, dmsq32: 3.4e-5, delta_cp: 1.17, ordering: 0.1 }
+    fixed: [PMNS_SIGN_MASS_SQUARED_32]
+  grid: { bins: 2000, min: 0.0, max: 10.0 }
+
 run: { work_dir: ../work/legacy_hk_mock, seed: 1234, legacy_rng_order: true }

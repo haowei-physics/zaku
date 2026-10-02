@@ -4,6 +4,33 @@ Versioning: the minor version advances with each completed implementation
 stage, the patch version with fixes or renames in between. The library version
 is `zaku::version()`; the file-format/config schema is `zaku::schemaVersion()`.
 
+## 0.3.0 — 2026-09-30
+
+Stage 3: systematics.
+
+- `DialCatalog` (`configs/dials/neut_default.yaml`): the generator's dials with
+  their tweak points and `fit` flag; `systematics.xsec.dials` in the config.
+- `ParameterSet`: the GUNDAM parameter-set file layout (`TMatrixD`, `TObjArray`
+  names, priors, bounds, binning) with read/write/compare.
+- `SplineBuilder` and the `splines` stage: per-event `TGraph` response
+  branches with the legacy rules (nominal inserted, flat and unusable responses
+  as empty graphs); spline files carry `zaku/dials`.
+- The four parameter sets: `OscCovariance`, `DetectorCovariance`
+  (normalisations with pair correlations, or from shift universes),
+  `XsecCovariance` (sigma from the knots, bounds from the outer knots),
+  `FluxCovariance` (far block, `C − s·BᵀA⁻¹B`, binning); the `covariances`
+  stage writes them plus the oscillation grid under `parameters/`.
+- `ShiftParameter`/`ShiftInjector` (`shifts:`): scales and offsets of the
+  reconstructed quantities with everything downstream re-derived.
+- `SystematicsSummary`/`SummaryTable` and the `summary` stage: ±1σ effect of
+  every parameter on every sample, csv + ROOT histograms.
+- `Experiment`: `setSystematics/systematics`, `setDialCatalog`, `addShift`,
+  `makeSplines`, `makeCovariances`, `summariseSystematics`; `status` lists the
+  parameter files; YAML keys `systematics` and `shifts` are now interpreted.
+- CLI: `splines`, `covariances`, `summary`, `list-dials`, `show-systematics`.
+- Regression: the legacy configuration reproduces the reference spline file
+  graph by graph and the four reference parameter files and binnings.
+
 ## 0.2.0 — 2026-09-29
 
 Stage 2: the fake detector.

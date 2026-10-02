@@ -48,6 +48,9 @@ struct Experiment::Impl {
   std::vector<SampleDefinition> samples;
   std::string samplesInclude;
   OscillationParameters oscillation;
+  // systematics
+  SystematicsConfig systematics;
+  std::vector<ShiftParameter> shifts;
   std::map<std::string, std::string> raw;  ///< sections kept verbatim for later stages
   /// Loaded flux histograms (immutable once loaded, so sharing between copies is fine).
   mutable std::map<BeamMode, std::shared_ptr<FluxHistograms>> fluxCache;

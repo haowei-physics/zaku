@@ -154,7 +154,12 @@ int Binning::find(const std::vector<double>& x) const {
 
 std::string Binning::toText(const std::string& comment) const {
   std::ostringstream os;
-  if (!comment.empty()) os << "# " << comment << "\n";
+  if (!comment.empty()) {
+    // every line of a multi-line comment gets its own '#'
+    std::istringstream cs(comment);
+    std::string line;
+    while (std::getline(cs, line)) os << "# " << line << "\n";
+  }
   os << "variables:";
   for (std::size_t i = 0; i < variables_.size(); ++i) {
     os << " " << variables_[i];

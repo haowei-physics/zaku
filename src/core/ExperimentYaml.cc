@@ -17,12 +17,13 @@ namespace zaku {
 const std::vector<std::string>& experimentKnownKeys() {
   static const std::vector<std::string> k = {"name",     "baseline_km",  "matter",   "detector",       "flux_units",
                                              "beam_modes", "flux_covariance", "productions", "response", "smearing",
-                                             "energy",   "binding_energy", "samples", "oscillation",  "run"};
+                                             "energy",   "binding_energy", "samples", "oscillation",  "systematics",
+                                             "shifts",   "run"};
   return k;
 }
 
 const std::vector<std::string>& experimentRawKeys() {
-  static const std::vector<std::string> k = {"generator", "shifts", "systematics", "gundam"};
+  static const std::vector<std::string> k = {"generator", "gundam"};
   return k;
 }
 
@@ -267,6 +268,218 @@ YAML::Node emitSample(const SampleDefinition& s) {
   return n;
 }
 
+std::vector<std::string> stringList(const YAML::Node& n, const std::string& where) {
+  std::vector<std::string> out;
+  if (!n) return out;
+  if (n.IsScalar()) {
+    out.push_back(n.as<std::string>());
+    return out;
+  }
+  if (!n.IsSequence()) throw std::runtime_error("config: '" + where + "' must be a list of names");
+  for (const auto& e : n) out.push_back(e.as<std::string>());
+  return out;
+}
+
+SystematicsConfig parseSystematics(const YAML::Node& n, const std::string& baseDir, const SystematicsConfig& base) {
+  rejectUnknown(n, {"xsec", "flux", "detector", "oscillation", "grid"}, "systematics");
+  SystematicsConfig c = base;
+  if (n["xsec"]) {
+    const YAML::Node x = n["xsec"];
+    rejectUnknown(x, {"dials", "exclude", "write_unused_dials", "enabled"}, "systematics.xsec");
+    if (x["dials"]) {
+      const Block b = loadBlock(x["dials"], baseDir, "systematics.xsec.dials");
+      c.xsec.dials = DialCatalog::fromYamlString(b.text);
+      c.xsec.dialsInclude = b.includePath;
+    }
+    c.xsec.exclude = stringList(x["exclude"], "systematics.xsec.exclude");
+    c.xsec.writeUnusedDials = get<bool>(x, "write_unused_dials", c.xsec.writeUnusedDials);
+    c.xsec.enabled = get<bool>(x, "enabled", c.xsec.enabled);
+  }
+  if (n["flux"]) {
+    rejectUnknown(n["flux"], {"enabled"}, "systematics.flux");
+    c.flux.enabled = get<bool>(n["flux"], "enabled", c.flux.enabled);
+  }
+  if (n["detector"]) {
+    const YAML::Node d = n["detector"];
+    rejectUnknown(d, {"mode", "sigmas", "names", "correlation", "pairs", "range", "enabled"}, "systematics.detector");
+    c.detector.mode = get<std::string>(d, "mode", c.detector.mode);
+    if (c.detector.mode != "normalisation" && c.detector.mode != "shifts") {
+      throw std::runtime_error("config: systematics.detector.mode must be 'normalisation' or 'shifts'");
+    }
+    if (d["sigmas"]) {
+      c.detector.norms.clear();
+      for (const auto& kv : d["sigmas"]) {
+        DetectorNorm nm;
+        nm.sample = kv.first.as<std::string>();
+        nm.sigma = kv.second.as<double>();
+        c.detector.norms.push_back(nm);
+      }
+    }
+    if (d["names"]) {
+      for (const auto& kv : d["names"]) {
+        bool found = false;
+        for (auto& nm : c.detector.norms) {
+          if (nm.sample == kv.first.as<std::string>()) {
+            nm.name = kv.second.as<std::string>();
+            found = true;
+          }
+        }
+        if (!found) {
+          throw std::runtime_error("config: systematics.detector.names: '" + kv.first.as<std::string>() + "' has no sigma");
+        }
+      }
+    }
+    c.detector.correlation = get<double>(d, "correlation", c.detector.correlation);
+    if (d["pairs"]) {
+      c.detector.pairs.clear();
+      for (const auto& p : d["pairs"]) c.detector.pairs.push_back(stringList(p, "systematics.detector.pairs[]"));
+    }
+    if (d["range"]) {
+      const std::vector<std::string> r = stringList(d["range"], "systematics.detector.range");
+      if (r.size() != 2) throw std::runtime_error("config: systematics.detector.range needs [low, high]");
+      c.detector.rangeLow = std::stod(r[0]);
+      c.detector.rangeHigh = std::stod(r[1]);
+    }
+    c.detector.enabled = get<bool>(d, "enabled", c.detector.enabled);
+  }
+  if (n["oscillation"]) {
+    const YAML::Node o = n["oscillation"];
+    rejectUnknown(o, {"sigmas", "fixed", "enabled"}, "systematics.oscillation");
+    if (o["sigmas"]) {
+      const YAML::Node s = o["sigmas"];
+      rejectUnknown(s, {"s12sq", "s13sq", "s23sq", "dmsq21", "dmsq32", "delta_cp", "ordering"}, "systematics.oscillation.sigmas");
+      c.oscillation.sigmas.s12sq = get<double>(s, "s12sq", c.oscillation.sigmas.s12sq);
+      c.oscillation.sigmas.s13sq = get<double>(s, "s13sq", c.oscillation.sigmas.s13sq);
+      c.oscillation.sigmas.s23sq = get<double>(s, "s23sq", c.oscillation.sigmas.s23sq);
+      c.oscillation.sigmas.dmsq21 = get<double>(s, "dmsq21", c.oscillation.sigmas.dmsq21);
+      c.oscillation.sigmas.dmsq32 = get<double>(s, "dmsq32", c.oscillation.sigmas.dmsq32);
+      c.oscillation.sigmas.deltaCP = get<double>(s, "delta_cp", c.oscillation.sigmas.deltaCP);
+      c.oscillation.sigmas.ordering = get<double>(s, "ordering", c.oscillation.sigmas.ordering);
+    }
+    if (o["fixed"]) c.oscillation.fixed = stringList(o["fixed"], "systematics.oscillation.fixed");
+    c.oscillation.enabled = get<bool>(o, "enabled", c.oscillation.enabled);
+  }
+  if (n["grid"]) {
+    rejectUnknown(n["grid"], {"bins", "min", "max"}, "systematics.grid");
+    c.grid.bins = get<int>(n["grid"], "bins", c.grid.bins);
+    c.grid.min = get<double>(n["grid"], "min", c.grid.min);
+    c.grid.max = get<double>(n["grid"], "max", c.grid.max);
+  }
+  return c;
+}
+
+ShiftParameter parseShift(const YAML::Node& n, const std::string& where) {
+  rejectUnknown(n, {"name", "target", "kind", "sigma", "apply_to"}, where);
+  ShiftParameter s;
+  s.name = require<std::string>(n, "name", where);
+  s.target = shiftTargetFromString(require<std::string>(n, "target", where));
+  if (n["kind"]) s.kind = shiftKindFromString(n["kind"].as<std::string>());
+  s.sigma = require<double>(n, "sigma", where);
+  if (n["apply_to"]) s.applyTo = shiftApplyToFromString(n["apply_to"].as<std::string>());
+  return s;
+}
+
+YAML::Node emitSystematics(const SystematicsConfig& c) {
+  YAML::Node n;
+  {
+    YAML::Node x;
+    if (!c.xsec.dialsInclude.empty()) {
+      YAML::Node inc;
+      inc["include"] = c.xsec.dialsInclude;
+      x["dials"] = inc;
+    } else if (!c.xsec.dials.empty()) {
+      x["dials"] = YAML::Load(c.xsec.dials.toYaml());
+    }
+    if (!c.xsec.exclude.empty()) {
+      YAML::Node ex;
+      for (const auto& e : c.xsec.exclude) ex.push_back(e);
+      ex.SetStyle(YAML::EmitterStyle::Flow);
+      x["exclude"] = ex;
+    }
+    x["write_unused_dials"] = c.xsec.writeUnusedDials;
+    if (!c.xsec.enabled) x["enabled"] = false;
+    n["xsec"] = x;
+  }
+  {
+    YAML::Node f;
+    f["enabled"] = c.flux.enabled;
+    f.SetStyle(YAML::EmitterStyle::Flow);
+    n["flux"] = f;
+  }
+  {
+    YAML::Node d;
+    d["mode"] = c.detector.mode;
+    YAML::Node sig, names;
+    for (const auto& nm : c.detector.norms) {
+      sig[nm.sample] = nm.sigma;
+      if (!nm.name.empty()) names[nm.sample] = nm.name;
+    }
+    sig.SetStyle(YAML::EmitterStyle::Flow);
+    if (!c.detector.norms.empty()) d["sigmas"] = sig;
+    if (names.size() > 0) {
+      names.SetStyle(YAML::EmitterStyle::Flow);
+      d["names"] = names;
+    }
+    d["correlation"] = c.detector.correlation;
+    if (!c.detector.pairs.empty()) {
+      YAML::Node pairs;
+      for (const auto& p : c.detector.pairs) {
+        YAML::Node pair;
+        for (const auto& s : p) pair.push_back(s);
+        pair.SetStyle(YAML::EmitterStyle::Flow);
+        pairs.push_back(pair);
+      }
+      pairs.SetStyle(YAML::EmitterStyle::Flow);
+      d["pairs"] = pairs;
+    }
+    YAML::Node range;
+    range.push_back(c.detector.rangeLow);
+    range.push_back(c.detector.rangeHigh);
+    range.SetStyle(YAML::EmitterStyle::Flow);
+    d["range"] = range;
+    if (!c.detector.enabled) d["enabled"] = false;
+    n["detector"] = d;
+  }
+  {
+    YAML::Node o, s;
+    s["s12sq"] = c.oscillation.sigmas.s12sq;
+    s["s13sq"] = c.oscillation.sigmas.s13sq;
+    s["s23sq"] = c.oscillation.sigmas.s23sq;
+    s["dmsq21"] = c.oscillation.sigmas.dmsq21;
+    s["dmsq32"] = c.oscillation.sigmas.dmsq32;
+    s["delta_cp"] = c.oscillation.sigmas.deltaCP;
+    s["ordering"] = c.oscillation.sigmas.ordering;
+    s.SetStyle(YAML::EmitterStyle::Flow);
+    o["sigmas"] = s;
+    YAML::Node fixed;
+    for (const auto& f : c.oscillation.fixed) fixed.push_back(f);
+    fixed.SetStyle(YAML::EmitterStyle::Flow);
+    o["fixed"] = fixed;
+    if (!c.oscillation.enabled) o["enabled"] = false;
+    n["oscillation"] = o;
+  }
+  {
+    YAML::Node g;
+    g["bins"] = c.grid.bins;
+    g["min"] = c.grid.min;
+    g["max"] = c.grid.max;
+    g.SetStyle(YAML::EmitterStyle::Flow);
+    n["grid"] = g;
+  }
+  return n;
+}
+
+YAML::Node emitShift(const ShiftParameter& s) {
+  YAML::Node n;
+  n["name"] = s.name;
+  n["target"] = toString(s.target);
+  n["kind"] = toString(s.kind);
+  n["sigma"] = s.sigma;
+  n["apply_to"] = toString(s.applyTo);
+  n.SetStyle(YAML::EmitterStyle::Flow);
+  return n;
+}
+
 YAML::Node emitFlux(const FluxSpec& f) {
   YAML::Node n;
   n["file"] = f.file;
@@ -412,6 +625,12 @@ Experiment Experiment::fromYamlString(const std::string& yaml, const std::string
     }
     exp.setOscillation(p);
   }
+  if (root["systematics"]) impl.systematics = parseSystematics(root["systematics"], baseDir, impl.systematics);
+  if (root["shifts"]) {
+    if (!root["shifts"].IsSequence()) throw std::runtime_error("config: 'shifts' must be a list");
+    int i = 0;
+    for (const auto& s : root["shifts"]) exp.addShift(parseShift(s, "shifts[" + std::to_string(i++) + "]"));
+  }
   if (root["run"]) {
     const YAML::Node r = root["run"];
     rejectUnknown(r, {"work_dir", "seed", "legacy_rng_order"}, "run");
@@ -534,6 +753,12 @@ std::string Experiment::toYaml() const {
     o["dmsq32"] = impl.oscillation.dmsq32;
     o["ordering"] = impl.oscillation.normalOrdering ? "normal" : "inverted";
     root["oscillation"] = o;
+  }
+  root["systematics"] = emitSystematics(impl.systematics);
+  if (!impl.shifts.empty()) {
+    YAML::Node list;
+    for (const auto& s : impl.shifts) list.push_back(emitShift(s));
+    root["shifts"] = list;
   }
   {
     YAML::Node r;
